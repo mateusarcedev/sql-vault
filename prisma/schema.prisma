@@ -17,6 +17,7 @@ model User {
   updatedAt     DateTime       @updatedAt
   queries       Query[]
   tags          Tag[]
+  routines      Routine[]
 }
 
 model Query {
@@ -42,8 +43,9 @@ model Tag {
   name    String
   color   String? @default("#3B82F6")
   userId  String
-  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
-  queries Query[] @relation("QueryToTag")
+  user    User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  queries Query[]   @relation("QueryToTag")
+  routines Routine[] @relation("RoutineToTag")
 
   @@unique([name, userId])
 }
@@ -55,4 +57,33 @@ model QueryVersion {
   sql         String
   description String?
   createdAt   DateTime @default(now())
+}
+
+model Routine {
+  id          String           @id @default(cuid())
+  name        String
+  description String?
+  type        String           // "function" | "procedure" | "trigger" | "view"
+  database    String           // DatabaseType
+  sql         String           // DDL completo
+  parameters  String?          // JSON serializado: RoutineParameter[]
+  returnType  String?          // preenchido apenas quando type = "function"
+  status      String           @default("active") // "active" | "draft"
+  isFavorite  Boolean          @default(false)
+  copyCount   Int              @default(0)
+  userId      String
+  user        User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tags        Tag[]            @relation("RoutineToTag")
+  versions    RoutineVersion[]
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+  deletedAt   DateTime?
+}
+
+model RoutineVersion {
+  id        String   @id @default(cuid())
+  routineId String
+  routine   Routine  @relation(fields: [routineId], references: [id], onDelete: Cascade)
+  sql       String
+  createdAt DateTime @default(now())
 }

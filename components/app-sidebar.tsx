@@ -6,6 +6,7 @@ import {
   Database,
   Home,
   FileCode2,
+  Code2,
   Tags,
   Trash2,
   Star,
@@ -31,6 +32,7 @@ import {
 } from '@/components/ui/sidebar'
 import { Button } from '@/components/ui/button'
 import { useQueryStore } from '@/store/query-store'
+import { useRoutineStore } from '@/store/routine-store'
 import { useUIStore } from '@/store/ui-store'
 import { useSession, signOut } from 'next-auth/react'
 
@@ -44,6 +46,11 @@ const mainNavItems = [
     title: 'Consultas',
     url: '/consultas',
     icon: FileCode2,
+  },
+  {
+    title: 'Rotinas',
+    url: '/routines',
+    icon: Code2,
   },
   {
     title: 'Favoritas',
@@ -74,8 +81,10 @@ export function AppSidebar() {
   const pathname = usePathname()
   const { data: session } = useSession()
   const { getStats } = useQueryStore()
+  const { listRoutines } = useRoutineStore()
   const { openCommandPalette } = useUIStore()
   const stats = getStats()
+  const activeRoutinesCount = listRoutines().length
 
   const isActive = (url: string) => {
     if (url === '/') return pathname === '/'
@@ -128,9 +137,16 @@ export function AppSidebar() {
               {mainNavItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild isActive={isActive(item.url)}>
-                    <Link href={item.url}>
-                      <item.icon className="h-4 w-4" />
-                      <span>{item.title}</span>
+                    <Link href={item.url} className="flex justify-between w-full">
+                      <div className="flex items-center gap-2">
+                        <item.icon className="h-4 w-4" />
+                        <span>{item.title}</span>
+                      </div>
+                      {item.title === 'Rotinas' && activeRoutinesCount > 0 && (
+                        <span className="ml-auto inline-flex items-center justify-center rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-medium text-primary">
+                          {activeRoutinesCount}
+                        </span>
+                      )}
                     </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>

@@ -9,15 +9,19 @@ import { CommandPalette } from '@/components/command-palette'
 
 import { useSession } from 'next-auth/react'
 
+import { useRoutineStore } from '@/store/routine-store'
+
 function StoreInitializer() {
-  const { initialize, isLoading, isInitialized } = useQueryStore()
+  const { initialize: initQueries, isLoading: queriesLoading, isInitialized: queriesInit } = useQueryStore()
+  const { initialize: initRoutines, loading: routinesLoading, isInitialized: routinesInit } = useRoutineStore()
   const { status } = useSession()
 
   useEffect(() => {
-    if (status === 'authenticated' && !isInitialized && !isLoading) {
-      initialize()
+    if (status === 'authenticated') {
+      if (!queriesInit && !queriesLoading) initQueries()
+      if (!routinesInit && !routinesLoading) initRoutines()
     }
-  }, [status, initialize, isInitialized, isLoading])
+  }, [status, initQueries, queriesInit, queriesLoading, initRoutines, routinesInit, routinesLoading])
 
   return null
 }

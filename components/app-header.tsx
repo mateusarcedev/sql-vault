@@ -13,12 +13,16 @@ interface AppHeaderProps {
   title: string
   showSearch?: boolean
   showNewButton?: boolean
+  onNewClick?: () => void
+  newButtonText?: string
 }
 
 export function AppHeader({
   title,
   showSearch = true,
   showNewButton = true,
+  onNewClick,
+  newButtonText = "Nova Consulta",
 }: AppHeaderProps) {
   const router = useRouter()
   const pathname = usePathname()
@@ -66,9 +70,9 @@ export function AppHeader({
           </div>
         )}
         {showNewButton && (
-          <Button onClick={handleNewQuery} size="sm">
+          <Button onClick={onNewClick || handleNewQuery} size="sm">
             <Plus className="mr-1 h-4 w-4" />
-            Nova Consulta
+            {newButtonText}
           </Button>
         )}
       </div>
