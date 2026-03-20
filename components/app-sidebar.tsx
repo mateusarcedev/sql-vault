@@ -12,6 +12,8 @@ import {
   Plus,
   LogOut,
   User,
+  Settings,
+  Search,
 } from 'lucide-react'
 
 import {
@@ -29,6 +31,7 @@ import {
 } from '@/components/ui/sidebar'
 import { Button } from '@/components/ui/button'
 import { useQueryStore } from '@/store/query-store'
+import { useUIStore } from '@/store/ui-store'
 import { useSession, signOut } from 'next-auth/react'
 
 const mainNavItems = [
@@ -60,12 +63,18 @@ const manageNavItems = [
     url: '/lixeira',
     icon: Trash2,
   },
+  {
+    title: 'Configurações',
+    url: '/settings',
+    icon: Settings,
+  },
 ]
 
 export function AppSidebar() {
   const pathname = usePathname()
   const { data: session } = useSession()
   const { getStats } = useQueryStore()
+  const { openCommandPalette } = useUIStore()
   const stats = getStats()
 
   const isActive = (url: string) => {
@@ -79,12 +88,23 @@ export function AppSidebar() {
   return (
     <Sidebar>
       <SidebarHeader className="p-4">
-        <Link href="/" className="flex items-center gap-2">
+        <Link href="/" className="flex items-center gap-2 mb-4">
           <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary">
             <Database className="h-4 w-4 text-primary-foreground" />
           </div>
           <span className="text-lg font-semibold">SQL Vault</span>
         </Link>
+        <Button
+          variant="outline"
+          className="w-full justify-start text-muted-foreground shadow-none"
+          onClick={openCommandPalette}
+        >
+          <Search className="mr-2 h-4 w-4" />
+          <span className="flex-1 text-left">Buscar...</span>
+          <kbd className="pointer-events-none inline-flex h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground opacity-100">
+            <span className="text-xs">⌘</span>K
+          </kbd>
+        </Button>
       </SidebarHeader>
 
       <SidebarSeparator />

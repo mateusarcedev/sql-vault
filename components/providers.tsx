@@ -5,6 +5,7 @@ import { ThemeProvider } from 'next-themes'
 import { useQueryStore } from '@/store/query-store'
 import { SessionProvider } from 'next-auth/react'
 import { QueryProvider } from './query-provider'
+import { CommandPalette } from '@/components/command-palette'
 
 import { useSession } from 'next-auth/react'
 
@@ -37,6 +38,7 @@ export function Providers({ children }: ProvidersProps) {
         >
           <StoreInitializer />
           {children}
+          <CommandPalette />
         </ThemeProvider>
       </QueryProvider>
     </SessionProvider>

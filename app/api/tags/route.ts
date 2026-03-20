@@ -2,7 +2,7 @@ import { auth } from "@/auth"
 import db from "@/lib/db"
 import { NextResponse } from "next/server"
 
-export const GET = auth(async (req) => {
+export const GET: any = auth(async (req) => {
   if (!req.auth) {
     return NextResponse.json({ message: "Not authenticated" }, { status: 401 })
   }
@@ -26,7 +26,7 @@ export const GET = auth(async (req) => {
   }
 })
 
-export const POST = auth(async (req) => {
+export const POST: any = auth(async (req) => {
   if (!req.auth) {
     return NextResponse.json({ message: "Not authenticated" }, { status: 401 })
   }

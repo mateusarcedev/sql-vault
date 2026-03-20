@@ -2,16 +2,28 @@ import { auth } from "@/auth"
 import db from "@/lib/db"
 import { NextResponse } from "next/server"
 
-export const GET = auth(async (req) => {
+export const GET: any = auth(async (req) => {
   if (!req.auth) {
     return NextResponse.json({ message: "Not authenticated" }, { status: 401 })
   }
 
   const userId = req.auth.user?.id
+  const url = new URL(req.url!)
+  const search = url.searchParams.get("search")
+
+  const whereCondition: any = { userId }
+  if (search) {
+    // Prisma SQLite doesn't support mode: 'insensitive' easily, but standard contains does LIKE %search%
+    whereCondition.OR = [
+      { title: { contains: search } },
+      { description: { contains: search } },
+      { sql: { contains: search } },
+    ]
+  }
 
   try {
     const queries = await db.query.findMany({
-      where: { userId },
+      where: whereCondition,
       include: {
         tags: true,
         versions: {
@@ -29,7 +41,7 @@ export const GET = auth(async (req) => {
   }
 })
 
-export const POST = auth(async (req) => {
+export const POST: any = auth(async (req) => {
   if (!req.auth) {
     return NextResponse.json({ message: "Not authenticated" }, { status: 401 })
   }

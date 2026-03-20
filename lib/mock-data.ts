@@ -1,12 +1,12 @@
 import type { Query, Tag, DatabaseType } from '@/types/query'
 
 export const MOCK_TAGS: Tag[] = [
-  { id: 'tag-1', name: 'Relatórios', color: '#3B82F6', createdAt: '2024-01-15T10:00:00Z' },
-  { id: 'tag-2', name: 'Performance', color: '#10B981', createdAt: '2024-01-16T11:00:00Z' },
-  { id: 'tag-3', name: 'Backup', color: '#F59E0B', createdAt: '2024-01-17T12:00:00Z' },
-  { id: 'tag-4', name: 'Manutenção', color: '#EF4444', createdAt: '2024-01-18T13:00:00Z' },
-  { id: 'tag-5', name: 'Analytics', color: '#8B5CF6', createdAt: '2024-01-19T14:00:00Z' },
-  { id: 'tag-6', name: 'Segurança', color: '#EC4899', createdAt: '2024-01-20T15:00:00Z' },
+  { id: 'tag-1', name: 'Relatórios', color: '#3B82F6', createdAt: '2024-01-15T10:00:00Z', userId: 'mock-user' },
+  { id: 'tag-2', name: 'Performance', color: '#10B981', createdAt: '2024-01-16T11:00:00Z', userId: 'mock-user' },
+  { id: 'tag-3', name: 'Backup', color: '#F59E0B', createdAt: '2024-01-17T12:00:00Z', userId: 'mock-user' },
+  { id: 'tag-4', name: 'Manutenção', color: '#EF4444', createdAt: '2024-01-18T13:00:00Z', userId: 'mock-user' },
+  { id: 'tag-5', name: 'Analytics', color: '#8B5CF6', createdAt: '2024-01-19T14:00:00Z', userId: 'mock-user' },
+  { id: 'tag-6', name: 'Segurança', color: '#EC4899', createdAt: '2024-01-20T15:00:00Z', userId: 'mock-user' },
 ]
 
 const createQuery = (
@@ -26,7 +26,7 @@ const createQuery = (
   description,
   sql,
   database,
-  tags,
+  tags: tags.map(tagId => MOCK_TAGS.find(t => t.id === tagId)!).filter(Boolean),
   versions: [
     {
       id: `${id}-v1`,
@@ -40,6 +40,8 @@ const createQuery = (
   createdAt,
   updatedAt: createdAt,
   deletedAt,
+  userId: 'mock-user',
+  status: 'active',
 })
 
 export const MOCK_QUERIES: Query[] = [
