@@ -47,6 +47,7 @@ export default function QueryDetailPage({ params }: QueryDetailPageProps) {
   const router = useRouter()
   const {
     isLoading,
+    isInitialized,
     isSubmitting,
     getQuery,
     getTag,
@@ -67,10 +68,10 @@ export default function QueryDetailPage({ params }: QueryDetailPageProps) {
   }>({ open: false, versionA: null, versionB: null })
 
   useEffect(() => {
-    if (queries.length === 0 && !isLoading) {
+    if (!isInitialized && !isLoading) {
       initialize()
     }
-  }, [initialize, queries.length, isLoading])
+  }, [initialize, isInitialized, isLoading])
 
   const query = getQuery(id)
 

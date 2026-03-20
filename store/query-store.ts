@@ -10,6 +10,7 @@ interface QueryStore {
   
   // Loading states
   isLoading: boolean
+  isInitialized: boolean
   isSubmitting: boolean
   
   // Actions
@@ -49,6 +50,7 @@ export const useQueryStore = create<QueryStore>((set, get) => ({
   queries: [],
   tags: [],
   isLoading: false,
+  isInitialized: false,
   isSubmitting: false,
 
   initialize: async () => {
@@ -69,10 +71,10 @@ export const useQueryStore = create<QueryStore>((set, get) => ({
       const queries = await queriesRes.json()
       const tags = await tagsRes.json()
       
-      set({ queries, tags, isLoading: false })
+      set({ queries, tags, isLoading: false, isInitialized: true })
     } catch (error) {
       console.error('Store initialization error:', error)
-      set({ isLoading: false })
+      set({ isLoading: false, isInitialized: true }) // Prevent loop on error
     }
   },
 

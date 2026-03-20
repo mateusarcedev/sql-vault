@@ -85,6 +85,7 @@ function TrashedQueryCard({
 export default function TrashPage() {
   const {
     isLoading,
+    isInitialized,
     isSubmitting,
     listTrashed,
     restoreQuery,
@@ -98,10 +99,10 @@ export default function TrashPage() {
   const [emptyTrashModalOpen, setEmptyTrashModalOpen] = useState(false)
 
   useEffect(() => {
-    if (queries.length === 0 && !isLoading) {
+    if (!isInitialized && !isLoading) {
       initialize()
     }
-  }, [initialize, queries.length, isLoading])
+  }, [initialize, isInitialized, isLoading])
 
   const trashedQueries = listTrashed()
 

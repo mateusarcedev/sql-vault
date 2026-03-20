@@ -57,13 +57,13 @@ function StatCardSkeleton() {
 }
 
 export default function DashboardPage() {
-  const { isLoading, listQueries, getStats, initialize, queries } = useQueryStore()
+  const { isLoading, isInitialized, listQueries, getStats, initialize, queries } = useQueryStore()
   
   useEffect(() => {
-    if (queries.length === 0 && !isLoading) {
+    if (!isInitialized && !isLoading) {
       initialize()
     }
-  }, [initialize, queries.length, isLoading])
+  }, [initialize, isInitialized, isLoading])
 
   const stats = getStats()
   const recentQueries = listQueries().slice(0, 4)

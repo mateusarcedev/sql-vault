@@ -141,6 +141,7 @@ function TagForm({
 export default function TagsPage() {
   const {
     isLoading,
+    isInitialized,
     isSubmitting,
     tags,
     listQueries,
@@ -157,10 +158,10 @@ export default function TagsPage() {
   const [deletingTag, setDeletingTag] = useState<Tag | null>(null)
 
   useEffect(() => {
-    if (queries.length === 0 && !isLoading) {
+    if (!isInitialized && !isLoading) {
       initialize()
     }
-  }, [initialize, queries.length, isLoading])
+  }, [initialize, isInitialized, isLoading])
 
   const getQueryCountForTag = (tagId: string) => {
     return listQueries({ tagIds: [tagId] }).length

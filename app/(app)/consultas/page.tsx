@@ -49,6 +49,7 @@ function QueryListContent() {
   
   const {
     isLoading,
+    isInitialized,
     isSubmitting,
     listQueries,
     tags,
@@ -75,10 +76,10 @@ function QueryListContent() {
 
   // Initialize store
   useEffect(() => {
-    if (queries.length === 0 && !isLoading) {
+    if (!isInitialized && !isLoading) {
       initialize()
     }
-  }, [initialize, queries.length, isLoading])
+  }, [initialize, isInitialized, isLoading])
 
   // Load view mode from localStorage
   useEffect(() => {

@@ -10,14 +10,14 @@ import { CommandPalette } from '@/components/command-palette'
 import { useSession } from 'next-auth/react'
 
 function StoreInitializer() {
-  const { initialize, isLoading, queries } = useQueryStore()
+  const { initialize, isLoading, isInitialized } = useQueryStore()
   const { status } = useSession()
 
   useEffect(() => {
-    if (status === 'authenticated' && queries.length === 0 && !isLoading) {
+    if (status === 'authenticated' && !isInitialized && !isLoading) {
       initialize()
     }
-  }, [status, initialize, queries.length, isLoading])
+  }, [status, initialize, isInitialized, isLoading])
 
   return null
 }
