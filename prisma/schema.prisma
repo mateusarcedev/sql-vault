@@ -7,14 +7,14 @@ datasource db {
 }
 
 model User {
-  id            String         @id @default(cuid())
+  id            String    @id @default(cuid())
   name          String?
-  email         String?        @unique
+  email         String?   @unique
   emailVerified DateTime?
   image         String?
   password      String?
-  createdAt     DateTime       @default(now())
-  updatedAt     DateTime       @updatedAt
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
   queries       Query[]
   tags          Tag[]
   routines      Routine[]
@@ -22,13 +22,13 @@ model User {
 }
 
 model ApiKey {
-  id          String    @id @default(cuid())
-  name        String    // label dado pelo usuário, ex: "VS Code"
-  token       String    @unique // gerado pelo servidor, nunca pelo cliente
-  lastUsedAt  DateTime?
-  createdAt   DateTime  @default(now())
-  userId      String
-  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id         String    @id @default(cuid())
+  name       String // label dado pelo usuário, ex: "VS Code"
+  token      String    @unique // gerado pelo servidor, nunca pelo cliente
+  lastUsedAt DateTime?
+  createdAt  DateTime  @default(now())
+  userId     String
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model Query {
@@ -50,12 +50,12 @@ model Query {
 }
 
 model Tag {
-  id      String  @id @default(cuid())
-  name    String
-  color   String? @default("#3B82F6")
-  userId  String
-  user    User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  queries Query[]   @relation("QueryToTag")
+  id       String    @id @default(cuid())
+  name     String
+  color    String?   @default("#3B82F6")
+  userId   String
+  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  queries  Query[]   @relation("QueryToTag")
   routines Routine[] @relation("RoutineToTag")
 
   @@unique([name, userId])
@@ -74,11 +74,11 @@ model Routine {
   id          String           @id @default(cuid())
   name        String
   description String?
-  type        String           // "function" | "procedure" | "trigger" | "view"
-  database    String           // DatabaseType
-  sql         String           // DDL completo
-  parameters  String?          // JSON serializado: RoutineParameter[]
-  returnType  String?          // preenchido apenas quando type = "function"
+  type        String // "function" | "procedure" | "trigger" | "view"
+  database    String // DatabaseType
+  sql         String // DDL completo
+  parameters  String? // JSON serializado: RoutineParameter[]
+  returnType  String? // preenchido apenas quando type = "function"
   status      String           @default("active") // "active" | "draft"
   isFavorite  Boolean          @default(false)
   copyCount   Int              @default(0)
