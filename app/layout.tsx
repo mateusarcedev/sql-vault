@@ -13,6 +13,10 @@ const _geistMono = Geist_Mono({ subsets: ['latin'] })
 export const metadata: Metadata = {
   title: 'SQL Vault - Gerenciador de Consultas SQL',
   description: 'Organize, armazene e gerencie suas consultas SQL em um só lugar',
+  icons: {
+    icon: '/favicon.ico',
+    apple: '/apple-touch-icon.png',
+  },
 }
 
 export default function RootLayout({
