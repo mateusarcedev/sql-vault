@@ -200,8 +200,8 @@ export function RoutineDrawer({ open, onOpenChange, editRoutine }: RoutineDrawer
 
   return (
     <Sheet open={open} onOpenChange={handleClose}>
-      <SheetContent className="w-full sm:max-w-xl overflow-y-auto">
-        <SheetHeader>
+      <SheetContent className="w-full sm:max-w-2xl lg:max-w-3xl overflow-y-auto p-0 flex flex-col gap-0">
+        <SheetHeader className="px-6 py-4 border-b">
           <SheetTitle>
             {isEditing ? 'Editar Rotina' : 'Nova Rotina'}
           </SheetTitle>
@@ -212,7 +212,7 @@ export function RoutineDrawer({ open, onOpenChange, editRoutine }: RoutineDrawer
           </SheetDescription>
         </SheetHeader>
 
-        <div className="mt-6 space-y-6">
+        <div className="flex-1 overflow-y-auto px-6 py-6 space-y-6 min-w-0">
           <div className="space-y-2">
             <Label htmlFor="name">Nome da Rotina</Label>
             <Input
@@ -223,7 +223,7 @@ export function RoutineDrawer({ open, onOpenChange, editRoutine }: RoutineDrawer
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="type">Tipo</Label>
               <Select value={type} onValueChange={(v) => handleTypeChange(v as RoutineType)}>
@@ -288,8 +288,8 @@ export function RoutineDrawer({ open, onOpenChange, editRoutine }: RoutineDrawer
               {parameters.length > 0 ? (
                 <div className="space-y-2 max-h-[250px] overflow-y-auto pr-2">
                   {parameters.map((param, idx) => (
-                    <div key={idx} className="flex items-start gap-2 pt-2">
-                      <div className="flex-1 space-y-1">
+                    <div key={idx} className="flex flex-col sm:flex-row items-start gap-2 pt-2 pb-4 sm:pb-0 border-b sm:border-0">
+                      <div className="w-full sm:flex-1 space-y-1">
                         <Input 
                           placeholder="Nome (ex: id_user)" 
                           value={param.name} 
@@ -322,7 +322,7 @@ export function RoutineDrawer({ open, onOpenChange, editRoutine }: RoutineDrawer
                           </Select>
                         </div>
                       )}
-                      <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => handleRemoveParameter(idx)}>
+                      <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive self-end sm:self-auto" onClick={() => handleRemoveParameter(idx)}>
                         <X className="h-4 w-4" />
                       </Button>
                     </div>
@@ -391,8 +391,9 @@ export function RoutineDrawer({ open, onOpenChange, editRoutine }: RoutineDrawer
             <div className="overflow-hidden rounded-md border">
               <CodeMirror
                 value={sqlCode}
-                height="300px"
-                extensions={[sql()]}
+                height="auto"
+                minHeight="300px"
+                className="min-h-[300px] h-full"
                 onChange={(value) => setSqlCode(value)}
                 theme="dark" // Requisição explícita para o editor estar no tema escuro se possível (Monaco requested, CodeMirror here follows uiw defaults, let's stick to dark theme explicitly)
                 placeholder="/* Escreva sua rotina DDL aqui */"
@@ -433,7 +434,7 @@ export function RoutineDrawer({ open, onOpenChange, editRoutine }: RoutineDrawer
 
         </div>
 
-        <SheetFooter className="mt-6 gap-2">
+        <SheetFooter className="px-6 py-4 border-t mt-0 flex-row justify-end gap-3 bg-background/80 backdrop-blur-sm sticky bottom-0">
           <Button variant="outline" onClick={handleClose}>
             Cancelar
           </Button>

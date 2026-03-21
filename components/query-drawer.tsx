@@ -164,8 +164,8 @@ export function QueryDrawer({ open, onOpenChange, editQuery }: QueryDrawerProps)
 
   return (
     <Sheet open={open} onOpenChange={handleClose}>
-      <SheetContent className="w-full sm:max-w-xl overflow-y-auto">
-        <SheetHeader>
+      <SheetContent className="w-full sm:max-w-2xl lg:max-w-3xl overflow-y-auto p-0 flex flex-col gap-0">
+        <SheetHeader className="px-6 py-4 border-b">
           <SheetTitle>
             {isEditing ? 'Editar Consulta' : 'Nova Consulta'}
           </SheetTitle>
@@ -176,7 +176,7 @@ export function QueryDrawer({ open, onOpenChange, editQuery }: QueryDrawerProps)
           </SheetDescription>
         </SheetHeader>
 
-        <div className="mt-6 space-y-6">
+        <div className="flex-1 overflow-y-auto px-6 py-6 space-y-6 min-w-0">
           <div className="space-y-2">
             <Label htmlFor="title">Título</Label>
             <Input
@@ -231,10 +231,11 @@ export function QueryDrawer({ open, onOpenChange, editQuery }: QueryDrawerProps)
             <div className="overflow-hidden rounded-md border">
               <CodeMirror
                 value={sqlCode}
-                height="200px"
-                extensions={[sql()]}
+                height="auto"
+                minHeight="200px"
+                className="min-h-[200px] h-full"
                 onChange={(value) => setSqlCode(value)}
-                theme="light"
+                theme="dark"
                 placeholder="SELECT * FROM users WHERE..."
                 basicSetup={{
                   lineNumbers: true,
@@ -351,7 +352,7 @@ export function QueryDrawer({ open, onOpenChange, editQuery }: QueryDrawerProps)
           )}
         </div>
 
-        <SheetFooter className="mt-6 gap-2">
+        <SheetFooter className="px-6 py-4 border-t mt-0 flex-row justify-end gap-3 bg-background/80 backdrop-blur-sm sticky bottom-0">
           <Button variant="outline" onClick={handleClose}>
             Cancelar
           </Button>
