@@ -18,6 +18,17 @@ model User {
   queries       Query[]
   tags          Tag[]
   routines      Routine[]
+  apiKeys       ApiKey[]
+}
+
+model ApiKey {
+  id          String    @id @default(cuid())
+  name        String    // label dado pelo usuário, ex: "VS Code"
+  token       String    @unique // gerado pelo servidor, nunca pelo cliente
+  lastUsedAt  DateTime?
+  createdAt   DateTime  @default(now())
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model Query {

@@ -1,0 +1,101 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "./generated-client"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String?   @unique
+  emailVerified DateTime?
+  image         String?
+  password      String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  queries       Query[]
+  tags          Tag[]
+  routines      Routine[]
+  apiKeys       ApiKey[]
+}
+
+model ApiKey {
+  id         String    @id @default(cuid())
+  name       String // label dado pelo usuário, ex: "VS Code"
+  token      String    @unique // gerado pelo servidor, nunca pelo cliente
+  lastUsedAt DateTime?
+  createdAt  DateTime  @default(now())
+  userId     String
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Query {
+  id          String         @id @default(cuid())
+  title       String
+  description String?
+  sql         String
+  database    String         @default("postgresql")
+  isFavorite  Boolean        @default(false)
+  copyCount   Int            @default(0)
+  status      String         @default("active")
+  userId      String
+  user        User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tags        Tag[]          @relation("QueryToTag")
+  versions    QueryVersion[]
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+  deletedAt   DateTime?
+}
+
+model Tag {
+  id       String    @id @default(cuid())
+  name     String
+  color    String?   @default("#3B82F6")
+  userId   String
+  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  queries  Query[]   @relation("QueryToTag")
+  routines Routine[] @relation("RoutineToTag")
+
+  @@unique([name, userId])
+}
+
+model QueryVersion {
+  id          String   @id @default(cuid())
+  queryId     String
+  query       Query    @relation(fields: [queryId], references: [id], onDelete: Cascade)
+  sql         String
+  description String?
+  createdAt   DateTime @default(now())
+}
+
+model Routine {
+  id          String           @id @default(cuid())
+  name        String
+  description String?
+  type        String // "function" | "procedure" | "trigger" | "view"
+  database    String // DatabaseType
+  sql         String // DDL completo
+  parameters  String? // JSON serializado: RoutineParameter[]
+  returnType  String? // preenchido apenas quando type = "function"
+  status      String           @default("active") // "active" | "draft"
+  isFavorite  Boolean          @default(false)
+  copyCount   Int              @default(0)
+  userId      String
+  user        User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tags        Tag[]            @relation("RoutineToTag")
+  versions    RoutineVersion[]
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+  deletedAt   DateTime?
+}
+
+model RoutineVersion {
+  id        String   @id @default(cuid())
+  routineId String
+  routine   Routine  @relation(fields: [routineId], references: [id], onDelete: Cascade)
+  sql       String
+  createdAt DateTime @default(now())
+}

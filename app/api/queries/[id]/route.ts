@@ -1,13 +1,16 @@
 import { auth } from "@/auth"
 import db from "@/lib/db"
 import { NextResponse } from "next/server"
+import { getUserFromApiKey } from "@/lib/auth-api-key"
 
-export const GET = auth(async (req, { params }) => {
-  if (!req.auth) {
+export const GET = async (req: any, { params }: any) => {
+  const session = await auth()
+  const userId = session?.user?.id ?? await getUserFromApiKey(req)
+
+  if (!userId) {
     return NextResponse.json({ message: "Not authenticated" }, { status: 401 })
   }
 
-  const userId = req.auth.user?.id
   const { id } = await params as { id: string }
 
   try {
@@ -33,14 +36,16 @@ export const GET = auth(async (req, { params }) => {
     console.error("[QUERY_GET]", error)
     return NextResponse.json({ message: "Internal Error" }, { status: 500 })
   }
-}) as any // NextAuth auth() type on server actions/routes can be tricky with params
+}
 
-export const PUT = auth(async (req, { params }) => {
-  if (!req.auth) {
+export const PUT = async (req: any, { params }: any) => {
+  const session = await auth()
+  const userId = session?.user?.id ?? await getUserFromApiKey(req)
+
+  if (!userId) {
     return NextResponse.json({ message: "Not authenticated" }, { status: 401 })
   }
 
-  const userId = req.auth.user?.id
   const { id } = await params as { id: string }
   const body = await req.json()
   const { title, description, sql, database, status, tagIds, isFavorite, restore } = body
@@ -54,7 +59,6 @@ export const PUT = auth(async (req, { params }) => {
       return NextResponse.json({ message: "Not found" }, { status: 404 })
     }
 
-    // If SQL changes, create a new version
     const data: any = {
       title,
       description,
@@ -99,14 +103,16 @@ export const PUT = auth(async (req, { params }) => {
     console.error("[QUERY_PUT]", error)
     return NextResponse.json({ message: "Internal Error" }, { status: 500 })
   }
-}) as any
+}
 
-export const DELETE = auth(async (req, { params }) => {
-  if (!req.auth) {
+export const DELETE = async (req: any, { params }: any) => {
+  const session = await auth()
+  const userId = session?.user?.id ?? await getUserFromApiKey(req)
+
+  if (!userId) {
     return NextResponse.json({ message: "Not authenticated" }, { status: 401 })
   }
 
-  const userId = req.auth.user?.id
   const { id } = await params as { id: string }
   const { searchParams } = new URL(req.url)
   const permanent = searchParams.get("permanent") === "true"
@@ -128,4 +134,4 @@ export const DELETE = auth(async (req, { params }) => {
     console.error("[QUERY_DELETE]", error)
     return NextResponse.json({ message: "Internal Error" }, { status: 500 })
   }
-}) as any
+}

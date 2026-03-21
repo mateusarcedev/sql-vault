@@ -1,19 +1,22 @@
 import { auth } from "@/auth"
 import db from "@/lib/db"
 import { NextResponse } from "next/server"
+import { getUserFromApiKey } from "@/lib/auth-api-key"
 
-export const GET: any = auth(async (req, ctx) => {
-  if (!req.auth) {
+export const GET: any = async (req: any, ctx: any) => {
+  const session = await auth()
+  const userId = session?.user?.id ?? await getUserFromApiKey(req)
+
+  if (!userId) {
     return NextResponse.json({ message: "Not authenticated" }, { status: 401 })
   }
 
   try {
-    // NextAuth v5 typing handles req / params directly in some cases, but Next.js 15 needs await
-    const params = await (ctx as any).params
+    const params = await ctx.params
     const routine = await db.routine.findUnique({
       where: {
         id: params.id,
-        userId: req.auth.user?.id,
+        userId,
       },
       include: {
         tags: true,
@@ -37,15 +40,17 @@ export const GET: any = auth(async (req, ctx) => {
     console.error("[ROUTINE_GET]", error)
     return NextResponse.json({ message: "Internal Error" }, { status: 500 })
   }
-})
+}
 
-export const PUT: any = auth(async (req, ctx) => {
-  if (!req.auth) {
+export const PUT: any = async (req: any, ctx: any) => {
+  const session = await auth()
+  const userId = session?.user?.id ?? await getUserFromApiKey(req)
+
+  if (!userId) {
     return NextResponse.json({ message: "Not authenticated" }, { status: 401 })
   }
 
-  const userId = req.auth.user?.id
-  const params = await (ctx as any).params
+  const params = await ctx.params
   
   try {
     const existingRoutine = await db.routine.findUnique({
@@ -109,15 +114,17 @@ export const PUT: any = auth(async (req, ctx) => {
     console.error("[ROUTINE_PUT]", error)
     return NextResponse.json({ message: "Internal Error" }, { status: 500 })
   }
-})
+}
 
-export const DELETE: any = auth(async (req, ctx) => {
-  if (!req.auth) {
+export const DELETE: any = async (req: any, ctx: any) => {
+  const session = await auth()
+  const userId = session?.user?.id ?? await getUserFromApiKey(req)
+
+  if (!userId) {
     return NextResponse.json({ message: "Not authenticated" }, { status: 401 })
   }
 
-  const userId = req.auth.user?.id
-  const params = await (ctx as any).params
+  const params = await ctx.params
 
   try {
     const routine = await db.routine.findUnique({
@@ -143,4 +150,4 @@ export const DELETE: any = auth(async (req, ctx) => {
     console.error("[ROUTINE_DELETE]", error)
     return NextResponse.json({ message: "Internal Error" }, { status: 500 })
   }
-})
+}

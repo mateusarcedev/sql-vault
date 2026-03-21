@@ -1,13 +1,16 @@
 import { auth } from "@/auth"
 import db from "@/lib/db"
 import { NextResponse } from "next/server"
+import { getUserFromApiKey } from "@/lib/auth-api-key"
 
-export const GET: any = auth(async (req) => {
-  if (!req.auth) {
+export const GET: any = async (req: any) => {
+  const session = await auth()
+  const userId = session?.user?.id ?? await getUserFromApiKey(req)
+
+  if (!userId) {
     return NextResponse.json({ message: "Not authenticated" }, { status: 401 })
   }
 
-  const userId = req.auth.user?.id
   const url = new URL(req.url!)
   const search = url.searchParams.get("search")
   const type = url.searchParams.get("type")
@@ -63,14 +66,16 @@ export const GET: any = auth(async (req) => {
     console.error("[ROUTINES_GET]", error)
     return NextResponse.json({ message: "Internal Error" }, { status: 500 })
   }
-})
+}
 
-export const POST: any = auth(async (req) => {
-  if (!req.auth) {
+export const POST: any = async (req: any) => {
+  const session = await auth()
+  const userId = session?.user?.id ?? await getUserFromApiKey(req)
+
+  if (!userId) {
     return NextResponse.json({ message: "Not authenticated" }, { status: 401 })
   }
 
-  const userId = req.auth.user?.id
   const body = await req.json()
   const { name, description, type, database, sql, parameters, returnType, status, tagIds } = body
 
@@ -115,4 +120,4 @@ export const POST: any = auth(async (req) => {
     console.error("[ROUTINES_POST]", error)
     return NextResponse.json({ message: "Internal Error" }, { status: 500 })
   }
-})
+}
