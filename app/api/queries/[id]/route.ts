@@ -52,11 +52,15 @@ export const PUT = async (req: any, { params }: any) => {
 
   try {
     const existingQuery = await db.query.findUnique({
-      where: { id, userId },
+      where: { id },
     })
 
     if (!existingQuery) {
       return NextResponse.json({ message: "Not found" }, { status: 404 })
+    }
+
+    if (existingQuery.userId !== userId) {
+      return NextResponse.json({ message: "Forbidden" }, { status: 403 })
     }
 
     const data: any = {
@@ -73,12 +77,12 @@ export const PUT = async (req: any, { params }: any) => {
 
     if (sql && sql !== existingQuery.sql) {
       data.sql = sql
-      data.versions = {
-        create: {
-          sql,
-          description: `Updated at ${new Date().toISOString()}`,
-        },
-      }
+      await db.queryVersion.create({
+        data: {
+          queryId: id,
+          sql: existingQuery.sql,
+        }
+      })
     }
 
     if (tagIds) {
@@ -118,13 +122,25 @@ export const DELETE = async (req: any, { params }: any) => {
   const permanent = searchParams.get("permanent") === "true"
 
   try {
+    const existingQuery = await db.query.findUnique({
+      where: { id },
+    })
+
+    if (!existingQuery) {
+      return NextResponse.json({ message: "Not found" }, { status: 404 })
+    }
+
+    if (existingQuery.userId !== userId) {
+      return NextResponse.json({ message: "Forbidden" }, { status: 403 })
+    }
+
     if (permanent) {
       await db.query.delete({
-        where: { id, userId },
+        where: { id },
       })
     } else {
       await db.query.update({
-        where: { id, userId },
+        where: { id },
         data: { deletedAt: new Date() },
       })
     }

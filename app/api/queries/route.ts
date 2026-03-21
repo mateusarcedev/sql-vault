@@ -14,7 +14,7 @@ export const GET: any = async (req: any) => {
   const url = new URL(req.url!)
   const search = url.searchParams.get("search")
 
-  const whereCondition: any = { userId }
+  const whereCondition: any = { userId, deletedAt: null }
   if (search) {
     whereCondition.OR = [
       { title: { contains: search } },
