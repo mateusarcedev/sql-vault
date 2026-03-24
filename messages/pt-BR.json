@@ -201,6 +201,11 @@
   },
   "settings": {
     "title": "Configurações",
+    "tabs": {
+      "apiKeys": "API Keys",
+      "ai": "IA",
+      "data": "Dados"
+    },
     "apiKeys": {
       "sectionTitle": "API Keys Pessoais",
       "sectionDescription": "Crie tokens para acessar suas consultas via VS Code, scripts ou outras ferramentas.",

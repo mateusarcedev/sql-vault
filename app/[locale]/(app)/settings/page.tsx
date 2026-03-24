@@ -48,6 +48,7 @@ import {
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Badge } from "@/components/ui/badge"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { AIProvider, AIConfigResponse } from '@/types/ai'
 
 type ApiKey = {
@@ -347,399 +348,417 @@ export default function SettingsPage() {
       <AppHeader title={tSettings('title')} showSearch={false} />
       <main className="flex-1 overflow-auto p-6">
         <div className="mx-auto max-w-4xl space-y-8 pb-12">
+          <Tabs defaultValue="api-keys" className="space-y-6">
+            <TabsList className="h-11 w-full justify-start rounded-xl p-1 sm:w-fit">
+              <TabsTrigger value="api-keys" className="h-9 px-4 text-sm font-medium data-[state=active]:font-semibold">
+                {tKeys('sectionTitle')}
+              </TabsTrigger>
+              <TabsTrigger value="ai" className="h-9 px-4 text-sm font-medium data-[state=active]:font-semibold">
+                {tAI('sectionTitle')}
+              </TabsTrigger>
+              <TabsTrigger value="data" className="h-9 px-4 text-sm font-medium data-[state=active]:font-semibold">
+                {tData('sectionTitle')}
+              </TabsTrigger>
+            </TabsList>
 
-          <div className="space-y-1">
-            <h2 className="text-2xl font-bold tracking-tight">{tKeys('sectionTitle')}</h2>
-            <p className="text-muted-foreground">
-              {tKeys('sectionDescription')}
-            </p>
-          </div>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
+            <TabsContent value="api-keys" className="space-y-6">
               <div className="space-y-1">
-                <CardTitle className="text-lg font-semibold">{tKeys('cardTitle')}</CardTitle>
-                <CardDescription>
-                  {tKeys('cardDescription')}
-                </CardDescription>
+                <h2 className="text-2xl font-bold tracking-tight">{tKeys('sectionTitle')}</h2>
+                <p className="text-muted-foreground">
+                  {tKeys('sectionDescription')}
+                </p>
               </div>
-              <Button onClick={() => setIsCreateDialogOpen(true)} className="gap-2">
-                <Plus className="h-4 w-4" />
-                {tKeys('newKey')}
-              </Button>
-            </CardHeader>
-            <CardContent>
-              {isLoadingKeys ? (
-                <div className="py-8 text-center text-muted-foreground">{tKeys('loading')}</div>
-              ) : apiKeys && apiKeys.length > 0 ? (
-                <div className="rounded-md border">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>{tKeys('name')}</TableHead>
-                        <TableHead>{tKeys('createdAt')}</TableHead>
-                        <TableHead>{tKeys('regeneratedAt')}</TableHead>
-                        <TableHead>{tKeys('lastUsed')}</TableHead>
-                        <TableHead className="w-35"></TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {apiKeys.map((key) => (
-                        <TableRow key={key.id}>
-                          <TableCell className="font-medium">{key.name}</TableCell>
-                          <TableCell className="text-muted-foreground">
-                            {format(new Date(key.createdAt), 'dd MMM yyyy', { locale })}
-                          </TableCell>
-                          <TableCell className="text-muted-foreground italic">
-                            {key.regeneratedAt
-                              ? format(new Date(key.regeneratedAt), 'dd/MM/yy HH:mm', { locale })
-                              : tKeys('neverUsed')}
-                          </TableCell>
-                          <TableCell className="text-muted-foreground italic">
-                            {key.lastUsedAt
-                              ? format(new Date(key.lastUsedAt), 'dd/MM/yy HH:mm', { locale })
-                              : tKeys('neverUsed')}
-                          </TableCell>
-                          <TableCell>
-                            <div className="flex items-center gap-1">
-                              <AlertDialog>
-                                <AlertDialogTrigger asChild>
-                                  <Button variant="ghost" size="icon" className="h-8 w-8">
-                                    <RefreshCcw className="h-4 w-4" />
-                                  </Button>
-                                </AlertDialogTrigger>
-                                <AlertDialogContent>
-                                  <AlertDialogHeader>
-                                    <AlertDialogTitle>{tKeys('regenerateTitle')}</AlertDialogTitle>
-                                    <AlertDialogDescription>
-                                      {tKeys('regenerateDescription')}
-                                    </AlertDialogDescription>
-                                  </AlertDialogHeader>
-                                  <AlertDialogFooter>
-                                    <AlertDialogCancel>{tCommon('cancel')}</AlertDialogCancel>
-                                    <AlertDialogAction
-                                      onClick={() => {
-                                        setRegeneratingKeyId(key.id)
-                                        regenerateMutation.mutate(key.id)
-                                      }}
-                                    >
-                                      {regeneratingKeyId === key.id ? tKeys('regenerating') : tKeys('regenerate')}
-                                    </AlertDialogAction>
-                                  </AlertDialogFooter>
-                                </AlertDialogContent>
-                              </AlertDialog>
 
-                              <AlertDialog>
-                                <AlertDialogTrigger asChild>
-                                  <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10">
-                                    <Trash2 className="h-4 w-4" />
-                                  </Button>
-                                </AlertDialogTrigger>
-                                <AlertDialogContent>
-                                  <AlertDialogHeader>
-                                    <AlertDialogTitle>{tKeys('revokeTitle')}</AlertDialogTitle>
-                                    <AlertDialogDescription>
-                                      {tKeys('revokeDescription')}
-                                    </AlertDialogDescription>
-                                  </AlertDialogHeader>
-                                  <AlertDialogFooter>
-                                    <AlertDialogCancel>{tCommon('cancel')}</AlertDialogCancel>
-                                    <AlertDialogAction
-                                      onClick={() => deleteMutation.mutate(key.id)}
-                                      className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                                    >
-                                      {tKeys('revoke')}
-                                    </AlertDialogAction>
-                                  </AlertDialogFooter>
-                                </AlertDialogContent>
-                              </AlertDialog>
-                            </div>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </div>
-              ) : (
-                <div className="py-12 border-2 border-dashed rounded-lg flex flex-col items-center justify-center text-muted-foreground">
-                  <Key className="h-8 w-8 mb-2 opacity-20" />
-                  <p>{tKeys('noKeys')}</p>
-                </div>
-              )}
-            </CardContent>
-          </Card>
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
+                  <div className="space-y-1">
+                    <CardTitle className="text-lg font-semibold">{tKeys('cardTitle')}</CardTitle>
+                    <CardDescription>
+                      {tKeys('cardDescription')}
+                    </CardDescription>
+                  </div>
+                  <Button onClick={() => setIsCreateDialogOpen(true)} className="gap-2">
+                    <Plus className="h-4 w-4" />
+                    {tKeys('newKey')}
+                  </Button>
+                </CardHeader>
+                <CardContent>
+                  {isLoadingKeys ? (
+                    <div className="py-8 text-center text-muted-foreground">{tKeys('loading')}</div>
+                  ) : apiKeys && apiKeys.length > 0 ? (
+                    <div className="rounded-md border">
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>{tKeys('name')}</TableHead>
+                            <TableHead>{tKeys('createdAt')}</TableHead>
+                            <TableHead>{tKeys('regeneratedAt')}</TableHead>
+                            <TableHead>{tKeys('lastUsed')}</TableHead>
+                            <TableHead className="w-35"></TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {apiKeys.map((key) => (
+                            <TableRow key={key.id}>
+                              <TableCell className="font-medium">{key.name}</TableCell>
+                              <TableCell className="text-muted-foreground">
+                                {format(new Date(key.createdAt), 'dd MMM yyyy', { locale })}
+                              </TableCell>
+                              <TableCell className="text-muted-foreground italic">
+                                {key.regeneratedAt
+                                  ? format(new Date(key.regeneratedAt), 'dd/MM/yy HH:mm', { locale })
+                                  : tKeys('neverUsed')}
+                              </TableCell>
+                              <TableCell className="text-muted-foreground italic">
+                                {key.lastUsedAt
+                                  ? format(new Date(key.lastUsedAt), 'dd/MM/yy HH:mm', { locale })
+                                  : tKeys('neverUsed')}
+                              </TableCell>
+                              <TableCell>
+                                <div className="flex items-center gap-1">
+                                  <AlertDialog>
+                                    <AlertDialogTrigger asChild>
+                                      <Button variant="ghost" size="icon" className="h-8 w-8">
+                                        <RefreshCcw className="h-4 w-4" />
+                                      </Button>
+                                    </AlertDialogTrigger>
+                                    <AlertDialogContent>
+                                      <AlertDialogHeader>
+                                        <AlertDialogTitle>{tKeys('regenerateTitle')}</AlertDialogTitle>
+                                        <AlertDialogDescription>
+                                          {tKeys('regenerateDescription')}
+                                        </AlertDialogDescription>
+                                      </AlertDialogHeader>
+                                      <AlertDialogFooter>
+                                        <AlertDialogCancel>{tCommon('cancel')}</AlertDialogCancel>
+                                        <AlertDialogAction
+                                          onClick={() => {
+                                            setRegeneratingKeyId(key.id)
+                                            regenerateMutation.mutate(key.id)
+                                          }}
+                                        >
+                                          {regeneratingKeyId === key.id ? tKeys('regenerating') : tKeys('regenerate')}
+                                        </AlertDialogAction>
+                                      </AlertDialogFooter>
+                                    </AlertDialogContent>
+                                  </AlertDialog>
 
-          {/* AI Section */}
-          <div className="pt-4 space-y-1">
-            <h2 className="text-2xl font-bold tracking-tight">{tAI('sectionTitle')}</h2>
-            <p className="text-muted-foreground">
-              {tAI('sectionDescription')}
-            </p>
-          </div>
+                                  <AlertDialog>
+                                    <AlertDialogTrigger asChild>
+                                      <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10">
+                                        <Trash2 className="h-4 w-4" />
+                                      </Button>
+                                    </AlertDialogTrigger>
+                                    <AlertDialogContent>
+                                      <AlertDialogHeader>
+                                        <AlertDialogTitle>{tKeys('revokeTitle')}</AlertDialogTitle>
+                                        <AlertDialogDescription>
+                                          {tKeys('revokeDescription')}
+                                        </AlertDialogDescription>
+                                      </AlertDialogHeader>
+                                      <AlertDialogFooter>
+                                        <AlertDialogCancel>{tCommon('cancel')}</AlertDialogCancel>
+                                        <AlertDialogAction
+                                          onClick={() => deleteMutation.mutate(key.id)}
+                                          className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                        >
+                                          {tKeys('revoke')}
+                                        </AlertDialogAction>
+                                      </AlertDialogFooter>
+                                    </AlertDialogContent>
+                                  </AlertDialog>
+                                </div>
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </div>
+                  ) : (
+                    <div className="py-12 border-2 border-dashed rounded-lg flex flex-col items-center justify-center text-muted-foreground">
+                      <Key className="h-8 w-8 mb-2 opacity-20" />
+                      <p>{tKeys('noKeys')}</p>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </TabsContent>
 
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <BrainCircuit className="h-5 w-5" />
-                {tAI('cardTitle')}
-              </CardTitle>
-              <CardDescription>
-                {tAI('cardDescription')}
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              {isLoadingAIConfig ? (
-                <div className="flex items-center gap-2 text-muted-foreground text-sm">
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  {tAI('loadingConfig')}
-                </div>
-              ) : (
-                <>
-                  <div className="grid gap-6 sm:grid-cols-2">
-                    <div className="space-y-2">
-                      <Label>{tAI('provider')}</Label>
-                      <Select value={aiProvider} onValueChange={(v) => handleProviderChange(v as AIProvider)}>
-                        <SelectTrigger>
-                          <SelectValue placeholder={tAI('selectProvider')} />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {aiConfig?.ollamaAvailable && (
-                            <SelectItem value="ollama">{tAI('ollamaCompany')}</SelectItem>
+            <TabsContent value="ai" className="space-y-6">
+              <div className="space-y-1">
+                <h2 className="text-2xl font-bold tracking-tight">{tAI('sectionTitle')}</h2>
+                <p className="text-muted-foreground">
+                  {tAI('sectionDescription')}
+                </p>
+              </div>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <BrainCircuit className="h-5 w-5" />
+                    {tAI('cardTitle')}
+                  </CardTitle>
+                  <CardDescription>
+                    {tAI('cardDescription')}
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  {isLoadingAIConfig ? (
+                    <div className="flex items-center gap-2 text-muted-foreground text-sm">
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      {tAI('loadingConfig')}
+                    </div>
+                  ) : (
+                    <>
+                      <div className="grid gap-6 sm:grid-cols-2">
+                        <div className="space-y-2">
+                          <Label>{tAI('provider')}</Label>
+                          <Select value={aiProvider} onValueChange={(v) => handleProviderChange(v as AIProvider)}>
+                            <SelectTrigger className="h-11 text-sm sm:text-base">
+                              <SelectValue placeholder={tAI('selectProvider')} />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {aiConfig?.ollamaAvailable && (
+                                <SelectItem value="ollama">{tAI('ollamaCompany')}</SelectItem>
+                              )}
+                              <SelectItem value="openai">OpenAI</SelectItem>
+                              <SelectItem value="anthropic">Claude (Anthropic)</SelectItem>
+                              <SelectItem value="gemini">Gemini (Google)</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          {aiProvider === 'ollama' && (
+                            <p className="text-xs text-muted-foreground">{tAI('ollamaNote')}</p>
                           )}
-                          <SelectItem value="openai">OpenAI</SelectItem>
-                          <SelectItem value="anthropic">Claude (Anthropic)</SelectItem>
-                          <SelectItem value="gemini">Gemini (Google)</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      {aiProvider === 'ollama' && (
-                        <p className="text-xs text-muted-foreground">{tAI('ollamaNote')}</p>
+                        </div>
+
+                        <div className="space-y-2">
+                          <div className="flex items-center justify-between">
+                            <Label>{tAI('model')}</Label>
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              className="h-8 px-2 text-muted-foreground"
+                              onClick={handleRefreshModels}
+                              disabled={!aiProvider || isLoadingModels}
+                            >
+                              <RefreshCcw className={`h-3.5 w-3.5 ${isLoadingModels ? 'animate-spin' : ''}`} />
+                              <span className="ml-1.5">{tAI('refreshModels')}</span>
+                            </Button>
+                          </div>
+                          <Select value={aiModel} onValueChange={setAiModel} disabled={!aiProvider || isLoadingModels}>
+                            <SelectTrigger className="h-11 text-sm sm:text-base">
+                              {isLoadingModels
+                                ? <span className="flex items-center gap-2 text-muted-foreground"><Loader2 className="h-3 w-3 animate-spin" />{tAI('loadingModels')}</span>
+                                : <SelectValue placeholder={aiProvider ? tAI('selectModel') : tAI('selectProviderFirst')} />
+                              }
+                            </SelectTrigger>
+                            <SelectContent>
+                              {(aiModels?.models ?? []).map((m) => (
+                                <SelectItem key={m} value={m}>{m}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      </div>
+
+                      {aiProvider && aiProvider !== 'ollama' && (
+                        <div className="space-y-4 rounded-lg border p-4">
+                          <p className="text-sm font-medium">{tAI('apiKeySection')}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {tAI('keysStoredLocally')}
+                          </p>
+
+                          {aiProvider === 'openai' && (
+                            <div className="space-y-2">
+                              <Label htmlFor="openai-key">
+                                OpenAI API Key
+                                {aiConfig?.hasOpenaiKey && <Badge variant="secondary" className="ml-2 text-xs">{tAI('keyConfigured')}</Badge>}
+                              </Label>
+                              <div className="relative">
+                                <Input
+                                  id="openai-key"
+                                  type={showOpenaiKey ? 'text' : 'password'}
+                                  placeholder={aiConfig?.hasOpenaiKey ? '••••••••••••••••' : 'sk-...'}
+                                  value={openaiKey}
+                                  onChange={(e) => setOpenaiKey(e.target.value)}
+                                  className="pr-10"
+                                />
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="icon"
+                                  className="absolute right-1 top-1 h-8 w-8"
+                                  onClick={() => setShowOpenaiKey(!showOpenaiKey)}
+                                >
+                                  {showOpenaiKey ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                                </Button>
+                              </div>
+                              <p className="text-xs text-muted-foreground">{tAI('leaveBlankToKeep')}</p>
+                            </div>
+                          )}
+
+                          {aiProvider === 'anthropic' && (
+                            <div className="space-y-2">
+                              <Label htmlFor="anthropic-key">
+                                Anthropic API Key
+                                {aiConfig?.hasAnthropicKey && <Badge variant="secondary" className="ml-2 text-xs">{tAI('keyConfigured')}</Badge>}
+                              </Label>
+                              <div className="relative">
+                                <Input
+                                  id="anthropic-key"
+                                  type={showAnthropicKey ? 'text' : 'password'}
+                                  placeholder={aiConfig?.hasAnthropicKey ? '••••••••••••••••' : 'sk-ant-...'}
+                                  value={anthropicKey}
+                                  onChange={(e) => setAnthropicKey(e.target.value)}
+                                  className="pr-10"
+                                />
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="icon"
+                                  className="absolute right-1 top-1 h-8 w-8"
+                                  onClick={() => setShowAnthropicKey(!showAnthropicKey)}
+                                >
+                                  {showAnthropicKey ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                                </Button>
+                              </div>
+                              <p className="text-xs text-muted-foreground">{tAI('leaveBlankToKeep')}</p>
+                            </div>
+                          )}
+
+                          {aiProvider === 'gemini' && (
+                            <div className="space-y-2">
+                              <Label htmlFor="gemini-key">
+                                Gemini API Key
+                                {aiConfig?.hasGeminiKey && <Badge variant="secondary" className="ml-2 text-xs">{tAI('keyConfigured')}</Badge>}
+                              </Label>
+                              <div className="relative">
+                                <Input
+                                  id="gemini-key"
+                                  type={showGeminiKey ? 'text' : 'password'}
+                                  placeholder={aiConfig?.hasGeminiKey ? '••••••••••••••••' : 'AIza...'}
+                                  value={geminiKey}
+                                  onChange={(e) => setGeminiKey(e.target.value)}
+                                  className="pr-10"
+                                />
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="icon"
+                                  className="absolute right-1 top-1 h-8 w-8"
+                                  onClick={() => setShowGeminiKey(!showGeminiKey)}
+                                >
+                                  {showGeminiKey ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                                </Button>
+                              </div>
+                              <p className="text-xs text-muted-foreground">{tAI('leaveBlankToKeep')}</p>
+                            </div>
+                          )}
+                        </div>
                       )}
+
+                      {aiProvider === 'ollama' && (
+                        <div className="flex items-center gap-2 text-sm text-muted-foreground rounded-lg border p-4 bg-muted/30">
+                          <Info className="h-4 w-4 shrink-0" />
+                          <span>{tAI('ollamaNoAuth')}</span>
+                        </div>
+                      )}
+
+                      <Button
+                        onClick={() => saveAIConfigMutation.mutate()}
+                        disabled={!aiProvider || !aiModel || saveAIConfigMutation.isPending}
+                        className="gap-2"
+                      >
+                        {saveAIConfigMutation.isPending && <Loader2 className="h-4 w-4 animate-spin" />}
+                        {saveAIConfigMutation.isPending ? tAI('saving') : tAI('saveConfig')}
+                      </Button>
+                    </>
+                  )}
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            <TabsContent value="data" className="space-y-6">
+              <div className="space-y-1">
+                <h2 className="text-2xl font-bold tracking-tight">{tData('sectionTitle')}</h2>
+                <p className="text-muted-foreground">
+                  {tData('sectionDescription')}
+                </p>
+              </div>
+
+              <div className="grid gap-6">
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Download className="h-5 w-5" />
+                      {tData('exportTitle')}
+                    </CardTitle>
+                    <CardDescription>
+                      {tData('exportDescription')}
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <Button onClick={handleExport} disabled={isExporting} className="gap-2">
+                      <Download className="h-4 w-4" />
+                      {isExporting ? tData('exporting') : tData('exportButton')}
+                    </Button>
+                    <p className="text-sm text-muted-foreground mt-3">
+                      {tData('exportNote')}
+                    </p>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Upload className="h-5 w-5" />
+                      {tData('importTitle')}
+                    </CardTitle>
+                    <CardDescription>
+                      {tData('importDescription')}
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div
+                      className="flex flex-col items-center justify-center rounded-lg border-2 border-dashed p-6 transition-colors hover:bg-muted/50 cursor-pointer"
+                      onClick={() => fileInputRef.current?.click()}
+                    >
+                      <input
+                        type="file"
+                        accept=".json"
+                        className="hidden"
+                        ref={fileInputRef}
+                        onChange={handleFileChange}
+                      />
+                      <FileJson className="h-8 w-8 text-muted-foreground mb-4" />
+                      <p className="font-medium text-sm">{tData('importClickToSelect')}</p>
+                      <p className="text-xs text-muted-foreground mt-1">{tData('importOnlyExported')}</p>
                     </div>
 
-                    <div className="space-y-2">
-                      <div className="flex items-center justify-between">
-                        <Label>{tAI('model')}</Label>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          className="h-8 px-2 text-muted-foreground"
-                          onClick={handleRefreshModels}
-                          disabled={!aiProvider || isLoadingModels}
-                        >
-                          <RefreshCcw className={`h-3.5 w-3.5 ${isLoadingModels ? 'animate-spin' : ''}`} />
-                          <span className="ml-1.5">{tAI('refreshModels')}</span>
+                    {importError && (
+                      <div className="flex items-center gap-2 text-sm text-destructive bg-destructive/10 p-3 rounded-md">
+                        <AlertCircle className="h-4 w-4" />
+                        <p>{importError}</p>
+                      </div>
+                    )}
+
+                    {importPayload && !importError && (
+                      <div className="flex items-center justify-between bg-muted/50 p-3 rounded-md border">
+                        <div className="flex items-center gap-2 text-sm text-foreground">
+                          <CheckCircle2 className="h-4 w-4 text-green-500" />
+                          <p>{tData('importReady', { queries: importPayload.queries.length, tags: importPayload.tags.length })}</p>
+                        </div>
+                        <Button onClick={handleImport} disabled={isImporting} size="sm">
+                          {isImporting ? tData('importing') : tData('importConfirm')}
                         </Button>
                       </div>
-                      <Select value={aiModel} onValueChange={setAiModel} disabled={!aiProvider || isLoadingModels}>
-                        <SelectTrigger>
-                          {isLoadingModels
-                            ? <span className="flex items-center gap-2 text-muted-foreground"><Loader2 className="h-3 w-3 animate-spin" />{tAI('loadingModels')}</span>
-                            : <SelectValue placeholder={aiProvider ? tAI('selectModel') : tAI('selectProviderFirst')} />
-                          }
-                        </SelectTrigger>
-                        <SelectContent>
-                          {(aiModels?.models ?? []).map((m) => (
-                            <SelectItem key={m} value={m}>{m}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
-
-                  {aiProvider && aiProvider !== 'ollama' && (
-                    <div className="space-y-4 rounded-lg border p-4">
-                      <p className="text-sm font-medium">{tAI('apiKeySection')}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {tAI('keysStoredLocally')}
-                      </p>
-
-                      {aiProvider === 'openai' && (
-                        <div className="space-y-2">
-                          <Label htmlFor="openai-key">
-                            OpenAI API Key
-                            {aiConfig?.hasOpenaiKey && <Badge variant="secondary" className="ml-2 text-xs">{tAI('keyConfigured')}</Badge>}
-                          </Label>
-                          <div className="relative">
-                            <Input
-                              id="openai-key"
-                              type={showOpenaiKey ? 'text' : 'password'}
-                              placeholder={aiConfig?.hasOpenaiKey ? '••••••••••••••••' : 'sk-...'}
-                              value={openaiKey}
-                              onChange={(e) => setOpenaiKey(e.target.value)}
-                              className="pr-10"
-                            />
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="icon"
-                              className="absolute right-1 top-1 h-8 w-8"
-                              onClick={() => setShowOpenaiKey(!showOpenaiKey)}
-                            >
-                              {showOpenaiKey ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                            </Button>
-                          </div>
-                          <p className="text-xs text-muted-foreground">{tAI('leaveBlankToKeep')}</p>
-                        </div>
-                      )}
-
-                      {aiProvider === 'anthropic' && (
-                        <div className="space-y-2">
-                          <Label htmlFor="anthropic-key">
-                            Anthropic API Key
-                            {aiConfig?.hasAnthropicKey && <Badge variant="secondary" className="ml-2 text-xs">{tAI('keyConfigured')}</Badge>}
-                          </Label>
-                          <div className="relative">
-                            <Input
-                              id="anthropic-key"
-                              type={showAnthropicKey ? 'text' : 'password'}
-                              placeholder={aiConfig?.hasAnthropicKey ? '••••••••••••••••' : 'sk-ant-...'}
-                              value={anthropicKey}
-                              onChange={(e) => setAnthropicKey(e.target.value)}
-                              className="pr-10"
-                            />
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="icon"
-                              className="absolute right-1 top-1 h-8 w-8"
-                              onClick={() => setShowAnthropicKey(!showAnthropicKey)}
-                            >
-                              {showAnthropicKey ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                            </Button>
-                          </div>
-                          <p className="text-xs text-muted-foreground">{tAI('leaveBlankToKeep')}</p>
-                        </div>
-                      )}
-
-                      {aiProvider === 'gemini' && (
-                        <div className="space-y-2">
-                          <Label htmlFor="gemini-key">
-                            Gemini API Key
-                            {aiConfig?.hasGeminiKey && <Badge variant="secondary" className="ml-2 text-xs">{tAI('keyConfigured')}</Badge>}
-                          </Label>
-                          <div className="relative">
-                            <Input
-                              id="gemini-key"
-                              type={showGeminiKey ? 'text' : 'password'}
-                              placeholder={aiConfig?.hasGeminiKey ? '••••••••••••••••' : 'AIza...'}
-                              value={geminiKey}
-                              onChange={(e) => setGeminiKey(e.target.value)}
-                              className="pr-10"
-                            />
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="icon"
-                              className="absolute right-1 top-1 h-8 w-8"
-                              onClick={() => setShowGeminiKey(!showGeminiKey)}
-                            >
-                              {showGeminiKey ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                            </Button>
-                          </div>
-                          <p className="text-xs text-muted-foreground">{tAI('leaveBlankToKeep')}</p>
-                        </div>
-                      )}
-                    </div>
-                  )}
-
-                  {aiProvider === 'ollama' && (
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground rounded-lg border p-4 bg-muted/30">
-                      <Info className="h-4 w-4 shrink-0" />
-                      <span>{tAI('ollamaNoAuth')}</span>
-                    </div>
-                  )}
-
-                  <Button
-                    onClick={() => saveAIConfigMutation.mutate()}
-                    disabled={!aiProvider || !aiModel || saveAIConfigMutation.isPending}
-                    className="gap-2"
-                  >
-                    {saveAIConfigMutation.isPending && <Loader2 className="h-4 w-4 animate-spin" />}
-                    {saveAIConfigMutation.isPending ? tAI('saving') : tAI('saveConfig')}
-                  </Button>
-                </>
-              )}
-            </CardContent>
-          </Card>
-
-          <div className="pt-4">
-            <h2 className="text-2xl font-bold tracking-tight">{tData('sectionTitle')}</h2>
-            <p className="text-muted-foreground">
-              {tData('sectionDescription')}
-            </p>
-          </div>
-
-          <div className="grid gap-6">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Download className="h-5 w-5" />
-                  {tData('exportTitle')}
-                </CardTitle>
-                <CardDescription>
-                  {tData('exportDescription')}
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <Button onClick={handleExport} disabled={isExporting} className="gap-2">
-                  <Download className="h-4 w-4" />
-                  {isExporting ? tData('exporting') : tData('exportButton')}
-                </Button>
-                <p className="text-sm text-muted-foreground mt-3">
-                  {tData('exportNote')}
-                </p>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Upload className="h-5 w-5" />
-                  {tData('importTitle')}
-                </CardTitle>
-                <CardDescription>
-                  {tData('importDescription')}
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div
-                  className="flex flex-col items-center justify-center rounded-lg border-2 border-dashed p-6 transition-colors hover:bg-muted/50 cursor-pointer"
-                  onClick={() => fileInputRef.current?.click()}
-                >
-                  <input
-                    type="file"
-                    accept=".json"
-                    className="hidden"
-                    ref={fileInputRef}
-                    onChange={handleFileChange}
-                  />
-                  <FileJson className="h-8 w-8 text-muted-foreground mb-4" />
-                  <p className="font-medium text-sm">{tData('importClickToSelect')}</p>
-                  <p className="text-xs text-muted-foreground mt-1">{tData('importOnlyExported')}</p>
-                </div>
-
-                {importError && (
-                  <div className="flex items-center gap-2 text-sm text-destructive bg-destructive/10 p-3 rounded-md">
-                    <AlertCircle className="h-4 w-4" />
-                    <p>{importError}</p>
-                  </div>
-                )}
-
-                {importPayload && !importError && (
-                  <div className="flex items-center justify-between bg-muted/50 p-3 rounded-md border">
-                    <div className="flex items-center gap-2 text-sm text-foreground">
-                      <CheckCircle2 className="h-4 w-4 text-green-500" />
-                      <p>{tData('importReady', { queries: importPayload.queries.length, tags: importPayload.tags.length })}</p>
-                    </div>
-                    <Button onClick={handleImport} disabled={isImporting} size="sm">
-                      {isImporting ? tData('importing') : tData('importConfirm')}
-                    </Button>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </div>
+                    )}
+                  </CardContent>
+                </Card>
+              </div>
+            </TabsContent>
+          </Tabs>
 
         </div>
 
