@@ -18,6 +18,7 @@ export const GET: any = async (req: any) => {
         id: true,
         name: true,
         lastUsedAt: true,
+        regeneratedAt: true,
         createdAt: true,
       },
       orderBy: { createdAt: "desc" },
@@ -55,12 +56,14 @@ export const POST: any = async (req: any) => {
       data: {
         name: name.trim(),
         token,
+        regeneratedAt: new Date(),
         userId,
       },
       select: {
         id: true,
         name: true,
         token: true,
+        regeneratedAt: true,
         createdAt: true,
       }
     })

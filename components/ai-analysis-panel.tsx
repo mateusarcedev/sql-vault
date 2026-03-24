@@ -5,9 +5,11 @@ import { useTranslations } from 'next-intl'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
+import { Checkbox } from '@/components/ui/checkbox'
 import { useAIAnalyze } from '@/hooks/use-ai-analyze'
 import { Tag } from '@/types/query'
 import { PerformanceSeverity } from '@/types/ai'
+import { useState } from 'react'
 
 interface AIAnalysisPanelProps {
   sql: string
@@ -32,6 +34,9 @@ export function AIAnalysisPanel({
 }: AIAnalysisPanelProps) {
   const t = useTranslations('aiPanel')
   const { analyze, isAnalyzing, result } = useAIAnalyze()
+  const [applyName, setApplyName] = useState(true)
+  const [applyDescription, setApplyDescription] = useState(true)
+  const [applyTags, setApplyTags] = useState(true)
 
   const suggestedDescriptionLabel = (() => {
     try {
@@ -45,7 +50,11 @@ export function AIAnalysisPanel({
 
   const handleApply = () => {
     if (!result) return
-    onApplySuggestions(result.suggestedName, result.suggestedDescription, result.suggestedTags)
+    onApplySuggestions(
+      applyName ? result.suggestedName : '',
+      applyDescription ? result.suggestedDescription : '',
+      applyTags ? result.suggestedTags : []
+    )
   }
 
   return (
@@ -101,12 +110,27 @@ export function AIAnalysisPanel({
                 ))}
               </div>
             )}
+            <div className="flex flex-wrap gap-4 rounded-md border bg-background p-2">
+              <label className="flex items-center gap-2 text-xs cursor-pointer">
+                <Checkbox checked={applyName} onCheckedChange={(checked) => setApplyName(checked === true)} />
+                {t('applyName')}
+              </label>
+              <label className="flex items-center gap-2 text-xs cursor-pointer">
+                <Checkbox checked={applyDescription} onCheckedChange={(checked) => setApplyDescription(checked === true)} />
+                {t('applyDescription')}
+              </label>
+              <label className="flex items-center gap-2 text-xs cursor-pointer">
+                <Checkbox checked={applyTags} onCheckedChange={(checked) => setApplyTags(checked === true)} />
+                {t('applyTags')}
+              </label>
+            </div>
             <Button
               type="button"
               variant="secondary"
               size="sm"
               className="gap-2 mt-1"
               onClick={handleApply}
+              disabled={!applyName && !applyDescription && !applyTags}
             >
               <Check className="h-3 w-3" />
               {t('applySuggestions')}

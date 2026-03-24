@@ -23,11 +23,12 @@ export const POST = async (_req: Request, ctx: { params: Promise<{ id: string }>
 
     const updated = await db.apiKey.update({
       where: { id },
-      data: { token, lastUsedAt: null },
+      data: { token, lastUsedAt: null, regeneratedAt: new Date() },
       select: {
         id: true,
         name: true,
         token: true,
+        regeneratedAt: true,
         createdAt: true,
       },
     })

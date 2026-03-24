@@ -54,6 +54,7 @@ type ApiKey = {
   id: string
   name: string
   lastUsedAt: string | null
+  regeneratedAt: string | null
   createdAt: string
 }
 
@@ -81,6 +82,7 @@ export default function SettingsPage() {
   const [generatedKey, setGeneratedKey] = useState<NewApiKey | null>(null)
   const [isCopied, setIsCopied] = useState(false)
   const [regeneratingKeyId, setRegeneratingKeyId] = useState<string | null>(null)
+  const [modelsRefreshKey, setModelsRefreshKey] = useState(0)
 
   const [aiProvider, setAiProvider] = useState<AIProvider | ''>('')
   const [aiModel, setAiModel] = useState('')
@@ -103,9 +105,10 @@ export default function SettingsPage() {
   })
 
   const { data: aiModels, isLoading: isLoadingModels } = useQuery<{ models: string[] }>({
-    queryKey: ['ai-models', aiProvider],
+    queryKey: ['ai-models', aiProvider, modelsRefreshKey],
     queryFn: async () => {
-      const res = await fetch(`/api/ai/models?provider=${aiProvider}`)
+      const refreshParam = modelsRefreshKey > 0 ? `&refresh=${modelsRefreshKey}` : ''
+      const res = await fetch(`/api/ai/models?provider=${aiProvider}${refreshParam}`)
       if (!res.ok) return { models: [] }
       return res.json()
     },
@@ -122,6 +125,11 @@ export default function SettingsPage() {
   const handleProviderChange = (value: AIProvider) => {
     setAiProvider(value)
     setAiModel('')
+    setModelsRefreshKey(0)
+  }
+
+  const handleRefreshModels = () => {
+    setModelsRefreshKey(Date.now())
   }
 
   const saveAIConfigMutation = useMutation({
@@ -370,6 +378,7 @@ export default function SettingsPage() {
                       <TableRow>
                         <TableHead>{tKeys('name')}</TableHead>
                         <TableHead>{tKeys('createdAt')}</TableHead>
+                        <TableHead>{tKeys('regeneratedAt')}</TableHead>
                         <TableHead>{tKeys('lastUsed')}</TableHead>
                         <TableHead className="w-35"></TableHead>
                       </TableRow>
@@ -380,6 +389,11 @@ export default function SettingsPage() {
                           <TableCell className="font-medium">{key.name}</TableCell>
                           <TableCell className="text-muted-foreground">
                             {format(new Date(key.createdAt), 'dd MMM yyyy', { locale })}
+                          </TableCell>
+                          <TableCell className="text-muted-foreground italic">
+                            {key.regeneratedAt
+                              ? format(new Date(key.regeneratedAt), 'dd/MM/yy HH:mm', { locale })
+                              : tKeys('neverUsed')}
                           </TableCell>
                           <TableCell className="text-muted-foreground italic">
                             {key.lastUsedAt
@@ -503,7 +517,20 @@ export default function SettingsPage() {
                     </div>
 
                     <div className="space-y-2">
-                      <Label>{tAI('model')}</Label>
+                      <div className="flex items-center justify-between">
+                        <Label>{tAI('model')}</Label>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          className="h-8 px-2 text-muted-foreground"
+                          onClick={handleRefreshModels}
+                          disabled={!aiProvider || isLoadingModels}
+                        >
+                          <RefreshCcw className={`h-3.5 w-3.5 ${isLoadingModels ? 'animate-spin' : ''}`} />
+                          <span className="ml-1.5">{tAI('refreshModels')}</span>
+                        </Button>
+                      </div>
                       <Select value={aiModel} onValueChange={setAiModel} disabled={!aiProvider || isLoadingModels}>
                         <SelectTrigger>
                           {isLoadingModels

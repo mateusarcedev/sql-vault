@@ -2,6 +2,9 @@ import { auth } from '@/auth'
 import db from '@/lib/db'
 import { NextResponse } from 'next/server'
 
+const MODELS_CACHE_TTL_MS = 60_000
+const modelsCache = new Map<string, { expiresAt: number; models: string[] }>()
+
 const fetchOllamaModels = async (baseUrl: string): Promise<string[]> => {
   const response = await fetch(`${baseUrl}/api/tags`)
   if (!response.ok) return []
@@ -71,6 +74,7 @@ export const GET = async (req: Request) => {
 
     const { searchParams } = new URL(req.url)
     const provider = searchParams.get('provider')
+    const refreshToken = searchParams.get('refresh')
 
     if (!provider) {
       return NextResponse.json({ message: 'Provider é obrigatório' }, { status: 400 })
@@ -81,8 +85,18 @@ export const GET = async (req: Request) => {
       if (!baseUrl) {
         return NextResponse.json({ models: [] })
       }
+
+      const cacheKey = `${session.user.id}:ollama`
+      const cached = modelsCache.get(cacheKey)
+      const forceRefresh = Boolean(refreshToken)
+
+      if (!forceRefresh && cached && cached.expiresAt > Date.now()) {
+        return NextResponse.json({ models: cached.models, cached: true })
+      }
+
       const models = await fetchOllamaModels(baseUrl)
-      return NextResponse.json({ models })
+      modelsCache.set(cacheKey, { models, expiresAt: Date.now() + MODELS_CACHE_TTL_MS })
+      return NextResponse.json({ models, cached: false })
     }
 
     if (!['openai', 'anthropic', 'gemini'].includes(provider)) {
@@ -99,6 +113,13 @@ export const GET = async (req: Request) => {
     })
 
     let models: string[] = []
+    const cacheKey = `${session.user.id}:${provider}`
+    const cached = modelsCache.get(cacheKey)
+    const forceRefresh = Boolean(refreshToken)
+
+    if (!forceRefresh && cached && cached.expiresAt > Date.now()) {
+      return NextResponse.json({ models: cached.models, cached: true })
+    }
 
     if (provider === 'openai' && config?.openaiApiKey) {
       models = await fetchOpenAIModels(config.openaiApiKey)
@@ -112,7 +133,9 @@ export const GET = async (req: Request) => {
       models = await fetchGeminiModels(config.geminiApiKey)
     }
 
-    return NextResponse.json({ models })
+    modelsCache.set(cacheKey, { models, expiresAt: Date.now() + MODELS_CACHE_TTL_MS })
+
+    return NextResponse.json({ models, cached: false })
   } catch (error) {
     console.error('[AI_MODELS_GET]', error)
     return NextResponse.json({ message: 'Internal Error' }, { status: 500 })

@@ -29,7 +29,7 @@ describe('AI Models API', () => {
       }),
     } as any)
 
-    const req = new NextRequest('http://localhost/api/ai/models?provider=gemini')
+    const req = new NextRequest('http://localhost/api/ai/models?provider=gemini&refresh=1')
     const res = await GET(req)
     const body = await res.json()
 
@@ -45,7 +45,7 @@ describe('AI Models API', () => {
       anthropicApiKey: null,
     } as any)
 
-    const req = new NextRequest('http://localhost/api/ai/models?provider=gemini')
+    const req = new NextRequest('http://localhost/api/ai/models?provider=gemini&refresh=1')
     const res = await GET(req)
     const body = await res.json()
 

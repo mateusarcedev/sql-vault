@@ -1,15 +1,16 @@
 import { useState } from 'react'
 import { toast } from 'sonner'
 import { AIAnalysisResult } from '@/types/ai'
+import { aiAnalysisResultSchema } from '@/lib/ai/schema'
 
 function normalizeAIResult(data: any): AIAnalysisResult {
-  return {
-    explanation: data?.explanation ?? '',
-    suggestedName: data?.suggestedName ?? '',
-    suggestedDescription: data?.suggestedDescription ?? '',
-    suggestedTags: Array.isArray(data?.suggestedTags) ? data.suggestedTags : [],
-    performanceReview: Array.isArray(data?.performanceReview) ? data.performanceReview : [],
+  const parsed = aiAnalysisResultSchema.safeParse(data)
+
+  if (!parsed.success) {
+    throw new Error('Resposta da IA em formato inválido')
   }
+
+  return parsed.data
 }
 
 export function useAIAnalyze() {

@@ -40,6 +40,7 @@ model ApiKey {
   name       String // label dado pelo usuário, ex: "VS Code"
   token      String    @unique // gerado pelo servidor, nunca pelo cliente
   lastUsedAt DateTime?
+  regeneratedAt DateTime?
   createdAt  DateTime  @default(now())
   userId     String
   user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
