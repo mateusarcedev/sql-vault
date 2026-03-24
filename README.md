@@ -11,6 +11,8 @@
   <p><i>Um cofre local-first para consultas SQL com versionamento, tags e integração com VS Code</i></p>
 </div>
 
+> Idioma: **Português (Brasil)** | [English](README.en.md)
+
 ## Recursos
 
 * 🗄️ Gerenciamento de consultas SQL com tags, favoritos e soft delete
@@ -18,7 +20,11 @@
 * ⏳ Histórico de versões com diff lado a lado via Monaco Editor
 * 📦 Exportação/Importação JSON (v1 e v2) e `.sql`
 * 🔍 Paleta de comandos global `Cmd+K`
+* 🤖 Configuração de IA por provedor (OpenAI, Anthropic, Gemini, Ollama) com lista dinâmica de modelos
+* 🔎 Seleção de modelo com pesquisa (combobox) nas configurações
+* 🧩 Página de Configurações organizada por abas (API Keys, IA e Dados)
 * 🔑 Chaves de API Pessoais para integrações externas
+* ♻️ Regeneração segura de API Key (token exibido apenas no momento da criação/regeneração)
 * 💻 Extensão VS Code para buscar e salvar consultas direto no editor
 
 ## Capturas de Tela
@@ -76,11 +82,12 @@
 
 | Tecnologia | Propósito |
 | --- | --- |
-| Next.js 15 | Framework para construir a aplicação React com rotas de API e segregação entre server e client components. |
+| Next.js 16 (App Router) | Framework para construir a aplicação React com rotas de API e segregação entre server e client components. |
 | TypeScript | Garante tipagem forte em toda a aplicação, prevenindo erros em tempo de execução e impondo limites contratuais. |
 | Prisma | ORM type-safe usado para interagir com o banco de dados, lidar com migrations e gerar definições de schema. |
 | SQLite | Banco local principal para persistência sem configuração. |
 | NextAuth v5 | Gerencia sessões de autenticação nativamente usando cookies seguros e bcrypt. |
+| next-intl | Internacionalização com rotas por locale e mensagens em pt-BR/en. |
 | TanStack Query | Biblioteca de busca de dados para gerenciar estado remoto, cache, atualizações em background e invalidação no frontend. |
 | Zustand | Gerenciamento leve de estado global para a camada de UI. |
 | shadcn/ui | Biblioteca de componentes acessíveis e personalizáveis baseada em Radix UI. |

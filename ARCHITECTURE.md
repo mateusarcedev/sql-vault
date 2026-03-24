@@ -1,16 +1,19 @@
 # Arquitetura do SQL Vault
 
+> Idioma: **Português (Brasil)** | [English](ARCHITECTURE.en.md)
+
 ## 1. Visão geral do projeto
 
 SQL Vault é um sistema local-first projetado para desenvolvedores, analistas de dados e equipes de engenharia organizarem, versionarem e executarem consultas SQL e rotinas de banco de dados em um repositório centralizado. Ele atua como um ambiente principal para gerenciar scripts de banco de dados com foco em busca rápida, tags, versionamento e integração segura com ferramentas externas.
 
 ## 2. Stack tecnológica
 
-* **Next.js (App Router)**: Framework para construir a aplicação React. Fornece capacidades full-stack integradas com rotas de API e segregação entre server components e client components.
+* **Next.js 16 (App Router)**: Framework para construir a aplicação React. Fornece capacidades full-stack integradas com rotas de API e segregação entre server components e client components.
 * **TypeScript**: Garante tipagem forte em toda a aplicação, prevenindo erros em tempo de execução e impondo limites contratuais.
 * **Prisma**: ORM type-safe usado para interagir com o banco de dados, lidar com migrations e gerar definições estritas de schema em TypeScript.
 * **SQLite**: Banco local principal. Escolhido pela persistência local sem configuração, combinando perfeitamente com a natureza local-first do SQL Vault.
 * **NextAuth v5 (Auth.js)**: Gerencia sessões de autenticação nativamente no Next.js usando cookies HTTP-only seguros e bcrypt para hash de senhas.
+* **next-intl**: Internacionalização com rotas por locale (`/en`, `/pt-BR`) e catálogos de mensagens por idioma.
 * **TanStack Query**: Biblioteca de busca de dados para gerenciar estado remoto, cache, atualizações em background e invalidação no frontend.
 * **Zustand**: Gerenciamento leve de estado global para a camada de UI (selecionado em vez de Context API por desempenho e menor boilerplate em stores complexas).
 * **shadcn/ui**: Biblioteca de componentes acessíveis e personalizáveis construída sobre primitivas do Radix UI.
@@ -57,7 +60,10 @@ SQL Vault é um sistema local-first projetado para desenvolvedores, analistas de
 * **ApiKey**: Token de autenticação para sistemas externos (ex.: extensão VS Code).
 
   * *Obrigatórios*: `id`, `name`, `token` (gerado automaticamente de forma segura), `userId`.
-  * *Especial*: Registra `lastUsedAt`.
+  * *Especial*: Registra `lastUsedAt` e `regeneratedAt`.
+* **UserAIConfig**: Configuração de IA por usuário.
+  * *Obrigatórios*: `userId`, `provider`, `model`.
+  * *Opcional*: Chaves por provedor (`openaiApiKey`, `anthropicApiKey`, `geminiApiKey`).
 
 ## 5. Regras arquiteturais
 
@@ -131,6 +137,14 @@ A resolução de token passa exclusivamente por um único ponto de verdade: a fu
 * `GET    /api/keys`                - Lista todas as representações não sensíveis das chaves de API registradas pelo usuário.
 * `POST   /api/keys`                - Gera uma nova API Key (retorna o token bruto estritamente uma vez).
 * `DELETE /api/keys/[id]`           - Revoga permanentemente (hard-delete) uma API Key.
+* `POST   /api/keys/[id]/regenerate` - Regenera token de uma API Key existente (invalida token anterior e retorna o novo token uma única vez).
+
+**API de IA** *(Requer autenticação por Sessão)*
+
+* `GET    /api/ai/config`           - Retorna configuração atual de IA do usuário.
+* `PUT    /api/ai/config`           - Atualiza provedor, modelo e chaves de IA do usuário.
+* `GET    /api/ai/models?provider=` - Lista modelos por provedor com fetch dinâmico e cache de curta duração.
+* `POST   /api/ai/analyze`          - Executa análise de SQL e retorna explicação/sugestões estruturadas.
 
 **API de Versões** *(Suporta Sessão e API Key)*
 

@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { useTranslations } from 'next-intl'
 import { useDateFnsLocale } from '@/hooks/use-date-fns-locale'
-import { Download, Upload, FileJson, AlertCircle, CheckCircle2, Key, Plus, Trash2, Copy, Check, Info, BrainCircuit, Eye, EyeOff, Loader2, RefreshCcw } from 'lucide-react'
+import { Download, Upload, FileJson, AlertCircle, CheckCircle2, Key, Plus, Trash2, Copy, Check, Info, BrainCircuit, Eye, EyeOff, Loader2, RefreshCcw, ChevronsUpDown } from 'lucide-react'
 import { toast } from 'sonner'
 import { format } from 'date-fns'
 import { AppHeader } from '@/components/app-header'
@@ -49,6 +49,8 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import { Command, CommandEmpty, CommandInput, CommandItem, CommandList } from "@/components/ui/command"
 import { AIProvider, AIConfigResponse } from '@/types/ai'
 
 type ApiKey = {
@@ -93,6 +95,7 @@ export default function SettingsPage() {
   const [showOpenaiKey, setShowOpenaiKey] = useState(false)
   const [showAnthropicKey, setShowAnthropicKey] = useState(false)
   const [showGeminiKey, setShowGeminiKey] = useState(false)
+  const [modelComboboxOpen, setModelComboboxOpen] = useState(false)
 
   const { initialize } = useQueryStore()
 
@@ -510,11 +513,11 @@ export default function SettingsPage() {
                     </div>
                   ) : (
                     <>
-                      <div className="grid gap-6 sm:grid-cols-2">
+                      <div className="grid grid-cols-2 gap-6">
                         <div className="space-y-2">
                           <Label>{tAI('provider')}</Label>
                           <Select value={aiProvider} onValueChange={(v) => handleProviderChange(v as AIProvider)}>
-                            <SelectTrigger className="h-11 text-sm sm:text-base">
+                            <SelectTrigger className="h-11 w-full text-sm sm:text-base">
                               <SelectValue placeholder={tAI('selectProvider')} />
                             </SelectTrigger>
                             <SelectContent>
@@ -532,33 +535,70 @@ export default function SettingsPage() {
                         </div>
 
                         <div className="space-y-2">
-                          <div className="flex items-center justify-between">
-                            <Label>{tAI('model')}</Label>
+                          <Label>{tAI('model')}</Label>
+                          <Popover open={modelComboboxOpen} onOpenChange={setModelComboboxOpen}>
+                            <PopoverTrigger asChild>
+                              <Button
+                                type="button"
+                                variant="outline"
+                                role="combobox"
+                                aria-expanded={modelComboboxOpen}
+                                disabled={!aiProvider || isLoadingModels}
+                                className="h-11 w-full justify-between text-sm font-normal sm:text-base"
+                              >
+                                {isLoadingModels ? (
+                                  <span className="flex items-center gap-2 text-muted-foreground">
+                                    <Loader2 className="h-3 w-3 animate-spin" />
+                                    {tAI('loadingModels')}
+                                  </span>
+                                ) : aiModel ? (
+                                  <span className="truncate">{aiModel}</span>
+                                ) : (
+                                  <span className="text-muted-foreground">
+                                    {aiProvider ? tAI('selectModel') : tAI('selectProviderFirst')}
+                                  </span>
+                                )}
+                                <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                              </Button>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+                              <Command>
+                                <CommandInput placeholder={tAI('selectModel')} />
+                                <CommandList>
+                                  <CommandEmpty>
+                                    {aiProvider ? tAI('selectModel') : tAI('selectProviderFirst')}
+                                  </CommandEmpty>
+                                  {(aiModels?.models ?? []).map((m) => (
+                                    <CommandItem
+                                      key={m}
+                                      value={m}
+                                      onSelect={() => {
+                                        setAiModel(m)
+                                        setModelComboboxOpen(false)
+                                      }}
+                                    >
+                                      <Check className={`mr-2 h-4 w-4 ${aiModel === m ? 'opacity-100' : 'opacity-0'}`} />
+                                      <span className="truncate">{m}</span>
+                                    </CommandItem>
+                                  ))}
+                                </CommandList>
+                              </Command>
+                            </PopoverContent>
+                          </Popover>
+                          <div className="flex justify-end pt-1">
                             <Button
                               type="button"
                               variant="ghost"
-                              size="sm"
-                              className="h-8 px-2 text-muted-foreground"
+                              size="icon"
+                              className="h-8 w-8 text-muted-foreground"
                               onClick={handleRefreshModels}
                               disabled={!aiProvider || isLoadingModels}
+                              title={tAI('refreshModels')}
+                              aria-label={tAI('refreshModels')}
                             >
-                              <RefreshCcw className={`h-3.5 w-3.5 ${isLoadingModels ? 'animate-spin' : ''}`} />
-                              <span className="ml-1.5">{tAI('refreshModels')}</span>
+                              <RefreshCcw className={`h-4 w-4 ${isLoadingModels ? 'animate-spin' : ''}`} />
                             </Button>
                           </div>
-                          <Select value={aiModel} onValueChange={setAiModel} disabled={!aiProvider || isLoadingModels}>
-                            <SelectTrigger className="h-11 text-sm sm:text-base">
-                              {isLoadingModels
-                                ? <span className="flex items-center gap-2 text-muted-foreground"><Loader2 className="h-3 w-3 animate-spin" />{tAI('loadingModels')}</span>
-                                : <SelectValue placeholder={aiProvider ? tAI('selectModel') : tAI('selectProviderFirst')} />
-                              }
-                            </SelectTrigger>
-                            <SelectContent>
-                              {(aiModels?.models ?? []).map((m) => (
-                                <SelectItem key={m} value={m}>{m}</SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
                         </div>
                       </div>
 
