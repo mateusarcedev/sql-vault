@@ -33,6 +33,14 @@ export function AIAnalysisPanel({
   const t = useTranslations('aiPanel')
   const { analyze, isAnalyzing, result } = useAIAnalyze()
 
+  const suggestedDescriptionLabel = (() => {
+    try {
+      return t('suggestedDescription')
+    } catch {
+      return 'Descrição:'
+    }
+  })()
+
   if (!hasAIConfigured) return null
 
   const handleApply = () => {
@@ -81,7 +89,7 @@ export function AIAnalysisPanel({
             </div>
             {result.suggestedDescription && (
               <div className="space-y-1">
-                <span className="text-xs text-muted-foreground">{t('suggestedDescription')}</span>
+                <span className="text-xs text-muted-foreground">{suggestedDescriptionLabel}</span>
                 <p className="text-xs rounded-md border bg-background p-2">{result.suggestedDescription}</p>
               </div>
             )}
