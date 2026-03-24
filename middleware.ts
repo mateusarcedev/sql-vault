@@ -1,32 +1,41 @@
-import NextAuth from "next-auth"
-import { authConfig } from "./auth.config"
+import NextAuth from 'next-auth'
+import createMiddleware from 'next-intl/middleware'
+import { authConfig } from './auth.config'
+import { routing } from './i18n/routing'
+
+const intlMiddleware = createMiddleware(routing)
 
 const { auth } = NextAuth(authConfig)
 
 export default auth((req) => {
-  const isLoggedIn = !!req.auth
   const { nextUrl } = req
+  const pathname = nextUrl.pathname
+  const isLoggedIn = !!req.auth
 
-  const isApiAuthRoute = nextUrl.pathname.startsWith("/api/auth")
-  const isPublicRoute = ["/login", "/register"].includes(nextUrl.pathname)
-  const isAuthRoute = ["/login", "/register"].includes(nextUrl.pathname)
+  if (pathname.startsWith('/api/auth')) return undefined
 
-  if (isApiAuthRoute) return undefined
+  const localeMatch = pathname.match(/^\/(en|pt-BR)/)
+  const locale = localeMatch ? localeMatch[1] : 'en'
+  const pathWithoutLocale = localeMatch
+    ? pathname.slice(localeMatch[0].length) || '/'
+    : pathname
+
+  const isAuthRoute = ['/login', '/register'].includes(pathWithoutLocale)
 
   if (isAuthRoute) {
-    if (isLoggedIn) {
-      return Response.redirect(new URL("/", nextUrl))
-    }
-    return undefined
+    if (isLoggedIn) return Response.redirect(new URL(`/${locale}`, nextUrl))
+    return intlMiddleware(req)
   }
 
-  if (!isLoggedIn && !isPublicRoute) {
-    return Response.redirect(new URL("/login", nextUrl))
+  if (!isLoggedIn) {
+    return Response.redirect(new URL(`/${locale}/login`, nextUrl))
   }
 
-  return undefined
+  return intlMiddleware(req)
 })
 
 export const config = {
-  matcher: ['/((?!api|_next/static|_next/image|favicon\\.ico).*)'],
+  matcher: [
+    '/((?!api|_next/static|_next/image|favicon\\.ico|.*\\.png$|.*\\.ico$).*)',
+  ],
 }

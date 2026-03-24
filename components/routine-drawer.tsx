@@ -1,11 +1,14 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { useRouter, useSearchParams } from 'next/navigation'
+import { useRouter } from '@/i18n/navigation'
+import { useSearchParams } from 'next/navigation'
 import CodeMirror from '@uiw/react-codemirror'
 import { sql } from '@codemirror/lang-sql'
 import { toast } from 'sonner'
 import { Wand2, X, Loader2, FunctionSquare, GitBranch, Zap, Eye, Plus, Copy } from 'lucide-react'
+import { useTranslations } from 'next-intl'
+import { AIAnalysisPanel } from '@/components/ai-analysis-panel'
 
 import {
   Sheet,
@@ -69,10 +72,12 @@ const ROUTINE_TYPES: { value: RoutineType; label: string; icon: any }[] = [
 ]
 
 export function RoutineDrawer({ open, onOpenChange, editRoutine }: RoutineDrawerProps) {
+  const t = useTranslations('routineDrawer')
+  const tCommon = useTranslations('common')
   const router = useRouter()
   const searchParams = useSearchParams()
   const { create, update, isSubmitting } = useRoutineStore()
-  const { tags } = useQueryStore() // Shared tags
+  const { tags } = useQueryStore()
 
   const [name, setName] = useState('')
   const [description, setDescription] = useState('')
@@ -84,8 +89,16 @@ export function RoutineDrawer({ open, onOpenChange, editRoutine }: RoutineDrawer
   const [selectedTags, setSelectedTags] = useState<string[]>([])
   const [isFavorite, setIsFavorite] = useState(false)
   const [status, setStatus] = useState<'active' | 'draft'>('active')
+  const [hasAIConfigured, setHasAIConfigured] = useState(false)
 
   const isEditing = !!editRoutine
+
+  useEffect(() => {
+    fetch('/api/ai/config')
+      .then((res) => res.ok ? res.json() : null)
+      .then((data) => setHasAIConfigured(!!data?.provider))
+      .catch(() => {})
+  }, [])
 
   useEffect(() => {
     if (editRoutine) {
@@ -114,7 +127,6 @@ export function RoutineDrawer({ open, onOpenChange, editRoutine }: RoutineDrawer
   }, [editRoutine, open])
 
   const handleTypeChange = (newType: RoutineType) => {
-    // Se o usuário não editou o template anterior (é exatamente igual), podemos trocar
     if (sqlCode.trim() === TEMPLATES[type].trim() || sqlCode.trim() === '') {
       setSqlCode(TEMPLATES[newType])
     }
@@ -123,7 +135,7 @@ export function RoutineDrawer({ open, onOpenChange, editRoutine }: RoutineDrawer
 
   const handleAddParameter = () => {
     if (parameters.length >= 20) {
-      toast.error('Você atingiu o limite de 20 parâmetros.')
+      toast.error(t('maxParametersError'))
       return
     }
     setParameters([...parameters, { name: '', type: 'INTEGER', direction: 'IN' }])
@@ -143,11 +155,11 @@ export function RoutineDrawer({ open, onOpenChange, editRoutine }: RoutineDrawer
 
   const handleSubmit = async () => {
     if (!name.trim()) {
-      toast.error('O nome da rotina é obrigatório')
+      toast.error(t('nameRequired'))
       return
     }
     if (!sqlCode.trim()) {
-      toast.error('Código SQL é obrigatório')
+      toast.error(t('sqlRequired'))
       return
     }
 
@@ -168,20 +180,29 @@ export function RoutineDrawer({ open, onOpenChange, editRoutine }: RoutineDrawer
 
       if (isEditing && editRoutine) {
         await update(editRoutine.id, payload)
-        toast.success('Rotina atualizada!')
+        toast.success(t('updateSuccess'))
       } else {
         await create(payload)
-        toast.success('Rotina criada!')
+        toast.success(t('createSuccess'))
       }
-      
+
       onOpenChange(false)
       const params = new URLSearchParams(searchParams.toString())
       params.delete('drawer')
       params.delete('id')
       router.push(`/routines${params.toString() ? '?' + params.toString() : ''}`)
     } catch {
-      toast.error('Erro ao salvar rotina')
+      toast.error(t('saveError'))
     }
+  }
+
+  const handleApplySuggestions = (suggestedName: string, suggestedTagNames: string[]) => {
+    if (suggestedName) setName(suggestedName)
+    const matchedIds = tags
+      .filter((t) => suggestedTagNames.some((n) => n.toLowerCase() === t.name.toLowerCase()))
+      .map((t) => t.id)
+    if (matchedIds.length > 0) setSelectedTags(matchedIds)
+    toast.success(t('suggestionsApplied'))
   }
 
   const handleToggleTag = (tagId: string) => {
@@ -203,21 +224,19 @@ export function RoutineDrawer({ open, onOpenChange, editRoutine }: RoutineDrawer
       <SheetContent className="w-full sm:max-w-2xl lg:max-w-3xl overflow-y-auto p-0 flex flex-col gap-0">
         <SheetHeader className="px-6 py-4 border-b">
           <SheetTitle>
-            {isEditing ? 'Editar Rotina' : 'Nova Rotina'}
+            {isEditing ? t('editTitle') : t('newTitle')}
           </SheetTitle>
           <SheetDescription>
-            {isEditing
-              ? 'Atualize os metadados ou o código SQL desta rotina'
-              : 'Configure os parâmetros e o código SQL para a nova rotina de banco de dados'}
+            {isEditing ? t('editDescription') : t('newDescription')}
           </SheetDescription>
         </SheetHeader>
 
         <div className="flex-1 overflow-y-auto px-6 py-6 space-y-6 min-w-0">
           <div className="space-y-2">
-            <Label htmlFor="name">Nome da Rotina</Label>
+            <Label htmlFor="name">{t('nameLabel')}</Label>
             <Input
               id="name"
-              placeholder="Ex: get_active_users"
+              placeholder={t('namePlaceholder')}
               value={name}
               onChange={(e) => setName(e.target.value)}
             />
@@ -225,7 +244,7 @@ export function RoutineDrawer({ open, onOpenChange, editRoutine }: RoutineDrawer
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="type">Tipo</Label>
+              <Label htmlFor="type">{t('typeLabel')}</Label>
               <Select value={type} onValueChange={(v) => handleTypeChange(v as RoutineType)}>
                 <SelectTrigger>
                   <SelectValue />
@@ -244,7 +263,7 @@ export function RoutineDrawer({ open, onOpenChange, editRoutine }: RoutineDrawer
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="database">Banco de Dados</Label>
+              <Label htmlFor="database">{t('databaseLabel')}</Label>
               <Select value={database} onValueChange={(v) => setDatabase(v as DatabaseType)}>
                 <SelectTrigger>
                   <SelectValue />
@@ -261,10 +280,10 @@ export function RoutineDrawer({ open, onOpenChange, editRoutine }: RoutineDrawer
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="description">Descrição</Label>
+            <Label htmlFor="description">{t('descriptionLabel')}</Label>
             <Textarea
               id="description"
-              placeholder="Descreva o propósito da rotina..."
+              placeholder={t('descriptionPlaceholder')}
               value={description}
               onChange={(e) => setDescription(e.target.value.substring(0, 500))}
               rows={2}
@@ -274,14 +293,13 @@ export function RoutineDrawer({ open, onOpenChange, editRoutine }: RoutineDrawer
             </div>
           </div>
 
-          {/* Parâmetros (apenas function / procedure) */}
           {(type === 'function' || type === 'procedure') && (
             <div className="space-y-3 rounded-lg border p-4 bg-muted/30">
               <div className="flex items-center justify-between">
-                <Label>Parâmetros ({parameters.length}/20)</Label>
+                <Label>{t('parametersLabel')} ({parameters.length}/20)</Label>
                 <Button variant="outline" size="sm" onClick={handleAddParameter} className="h-7 text-xs">
                   <Plus className="mr-1 h-3 w-3" />
-                  Adicionar
+                  {t('addParameter')}
                 </Button>
               </div>
 
@@ -290,25 +308,25 @@ export function RoutineDrawer({ open, onOpenChange, editRoutine }: RoutineDrawer
                   {parameters.map((param, idx) => (
                     <div key={idx} className="flex flex-col sm:flex-row items-start gap-2 pt-2 pb-4 sm:pb-0 border-b sm:border-0">
                       <div className="w-full sm:flex-1 space-y-1">
-                        <Input 
-                          placeholder="Nome (ex: id_user)" 
-                          value={param.name} 
+                        <Input
+                          placeholder={t('paramNamePlaceholder')}
+                          value={param.name}
                           onChange={(e) => handleUpdateParameter(idx, 'name', e.target.value)}
                           className="h-8 text-sm"
                         />
                       </div>
                       <div className="flex-1 space-y-1">
-                        <Input 
-                          placeholder="Tipo SQL (ex: INTEGER)" 
-                          value={param.type} 
+                        <Input
+                          placeholder={t('paramTypePlaceholder')}
+                          value={param.type}
                           onChange={(e) => handleUpdateParameter(idx, 'type', e.target.value)}
                           className="h-8 text-sm"
                         />
                       </div>
                       {type === 'procedure' && (
                         <div className="w-[100px] space-y-1">
-                          <Select 
-                            value={param.direction} 
+                          <Select
+                            value={param.direction}
                             onValueChange={(val) => handleUpdateParameter(idx, 'direction', val as any)}
                           >
                             <SelectTrigger className="h-8 text-sm">
@@ -330,15 +348,15 @@ export function RoutineDrawer({ open, onOpenChange, editRoutine }: RoutineDrawer
                 </div>
               ) : (
                 <div className="text-sm text-muted-foreground text-center py-4 bg-background border rounded-md border-dashed">
-                  Nenhum parâmetro definido.
+                  {t('noParameters')}
                 </div>
               )}
 
               {type === 'function' && (
                 <div className="pt-4 border-t mt-4 space-y-2">
-                  <Label>Tipo de retorno</Label>
-                  <Input 
-                    placeholder="ex: INTEGER, TABLE, VOID"
+                  <Label>{t('returnTypeLabel')}</Label>
+                  <Input
+                    placeholder={t('returnTypePlaceholder')}
                     value={returnType}
                     onChange={(e) => setReturnType(e.target.value)}
                   />
@@ -348,7 +366,7 @@ export function RoutineDrawer({ open, onOpenChange, editRoutine }: RoutineDrawer
           )}
 
           <div className="space-y-2">
-            <Label>Tags</Label>
+            <Label>{t('tagsLabel')}</Label>
             <div className="flex flex-wrap gap-2">
               {tags.map((tag) => {
                 const isSelected = selectedTags.includes(tag.id)
@@ -378,7 +396,7 @@ export function RoutineDrawer({ open, onOpenChange, editRoutine }: RoutineDrawer
               })}
               {tags.length === 0 && (
                 <span className="text-sm text-muted-foreground">
-                  Nenhuma tag disponível
+                  {t('noTagsAvailable')}
                 </span>
               )}
             </div>
@@ -386,7 +404,7 @@ export function RoutineDrawer({ open, onOpenChange, editRoutine }: RoutineDrawer
 
           <div className="space-y-2">
             <div className="flex items-center justify-between">
-              <Label>Código SQL ({type.toUpperCase()})</Label>
+              <Label>{t('sqlLabel')} ({type.toUpperCase()})</Label>
             </div>
             <div className="overflow-hidden rounded-md border">
               <CodeMirror
@@ -395,8 +413,8 @@ export function RoutineDrawer({ open, onOpenChange, editRoutine }: RoutineDrawer
                 minHeight="300px"
                 className="min-h-[300px] h-full"
                 onChange={(value) => setSqlCode(value)}
-                theme="dark" // Requisição explícita para o editor estar no tema escuro se possível (Monaco requested, CodeMirror here follows uiw defaults, let's stick to dark theme explicitly)
-                placeholder="/* Escreva sua rotina DDL aqui */"
+                theme="dark"
+                placeholder="/* Write your DDL routine here */"
                 basicSetup={{
                   lineNumbers: true,
                   highlightActiveLineGutter: true,
@@ -407,6 +425,14 @@ export function RoutineDrawer({ open, onOpenChange, editRoutine }: RoutineDrawer
             </div>
           </div>
 
+          <AIAnalysisPanel
+            sql={sqlCode}
+            dialect={database}
+            availableTags={tags}
+            onApplySuggestions={handleApplySuggestions}
+            hasAIConfigured={hasAIConfigured}
+          />
+
           <div className="flex items-center gap-2">
             <Checkbox
               id="favorite"
@@ -414,15 +440,15 @@ export function RoutineDrawer({ open, onOpenChange, editRoutine }: RoutineDrawer
               onCheckedChange={(checked) => setIsFavorite(checked === true)}
             />
             <Label htmlFor="favorite" className="cursor-pointer">
-              Marcar como favorita
+              {t('markFavorite')}
             </Label>
           </div>
 
           <div className="flex items-center justify-between rounded-lg border p-4">
             <div className="space-y-0.5">
-              <Label htmlFor="status">Status da Rotina</Label>
+              <Label htmlFor="status">{t('routineStatus')}</Label>
               <p className="text-xs text-muted-foreground">
-                {status === 'active' ? 'Ativa (visível na listagem)' : 'Rascunho (incompleta)'}
+                {status === 'active' ? t('statusActive') : t('statusDraft')}
               </p>
             </div>
             <Switch
@@ -436,11 +462,11 @@ export function RoutineDrawer({ open, onOpenChange, editRoutine }: RoutineDrawer
 
         <SheetFooter className="px-6 py-4 border-t mt-0 flex-row justify-end gap-3 bg-background/80 backdrop-blur-sm sticky bottom-0">
           <Button variant="outline" onClick={handleClose}>
-            Cancelar
+            {tCommon('cancel')}
           </Button>
           <Button onClick={handleSubmit} disabled={isSubmitting}>
             {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            {isEditing ? 'Salvar Alterações' : 'Criar Rotina'}
+            {isEditing ? t('saveChanges') : t('create')}
           </Button>
         </SheetFooter>
       </SheetContent>

@@ -2,10 +2,11 @@
 
 import { useState } from 'react'
 import { formatDistanceToNow } from 'date-fns'
-import { ptBR } from 'date-fns/locale'
-import { History, RotateCcw, GitCompare, MoreVertical, Trash2, Clock } from 'lucide-react'
+import { History, RotateCcw, GitCompare, Clock } from 'lucide-react'
 import { toast } from 'sonner'
+import { useTranslations } from 'next-intl'
 
+import { useDateFnsLocale } from '@/hooks/use-date-fns-locale'
 import { Button } from '@/components/ui/button'
 import {
   AlertDialog,
@@ -31,6 +32,9 @@ interface VersionTimelineProps {
 }
 
 export function VersionTimeline({ queryId, currentSql, onRestore, onCompare }: VersionTimelineProps) {
+  const t = useTranslations('versionTimeline')
+  const tCommon = useTranslations('common')
+  const dateFnsLocale = useDateFnsLocale()
   const { versions, isLoading, refetch } = useQueryVersions(queryId)
   const [selectedA, setSelectedA] = useState<QueryVersion | null>(null)
   const [selectedB, setSelectedB] = useState<QueryVersion | null>(null)
@@ -47,14 +51,14 @@ export function VersionTimeline({ queryId, currentSql, onRestore, onCompare }: V
       })
 
       if (!response.ok) {
-        throw new Error('Falha ao restaurar versão')
+        throw new Error('restore failed')
       }
 
-      toast.success('Versão restaurada com sucesso')
+      toast.success(t('restoreSuccess'))
       onRestore()
       refetch()
     } catch (error) {
-      toast.error('Erro ao restaurar versão')
+      toast.error(t('restoreError'))
     } finally {
       setIsRestoring(false)
       setVersionToRestore(null)
@@ -84,9 +88,9 @@ export function VersionTimeline({ queryId, currentSql, onRestore, onCompare }: V
           <EmptyMedia variant="icon">
             <History className="h-5 w-5" />
           </EmptyMedia>
-          <EmptyTitle>Nenhuma versão registrada ainda</EmptyTitle>
+          <EmptyTitle>{t('noVersionsTitle')}</EmptyTitle>
           <EmptyDescription>
-            As versões são criadas automaticamente quando você altera o SQL de uma consulta.
+            {t('noVersionsDescription')}
           </EmptyDescription>
         </EmptyHeader>
       </Empty>
@@ -119,7 +123,7 @@ export function VersionTimeline({ queryId, currentSql, onRestore, onCompare }: V
                     <span className="text-xs text-muted-foreground">
                       {formatDistanceToNow(new Date(version.createdAt), {
                         addSuffix: true,
-                        locale: ptBR,
+                        locale: dateFnsLocale,
                       })}
                     </span>
                     {version.description && (
@@ -136,7 +140,7 @@ export function VersionTimeline({ queryId, currentSql, onRestore, onCompare }: V
                       onClick={() => setSelectedA(isA ? null : version)}
                       className="h-7 text-[10px]"
                     >
-                      {isA ? 'Selecionado' : 'Sel. A'}
+                      {isA ? t('selected') : t('selectA')}
                     </Button>
                     <Button
                       variant={isB ? 'secondary' : 'outline'}
@@ -144,7 +148,7 @@ export function VersionTimeline({ queryId, currentSql, onRestore, onCompare }: V
                       onClick={() => setSelectedB(isB ? null : version)}
                       className="h-7 text-[10px]"
                     >
-                      {isB ? 'Selecionado' : 'Sel. B'}
+                      {isB ? t('selected') : t('selectB')}
                     </Button>
                     <Button
                       variant="ghost"
@@ -174,8 +178,10 @@ export function VersionTimeline({ queryId, currentSql, onRestore, onCompare }: V
             size="lg"
           >
             <GitCompare className="h-4 w-4" />
-            Comparar versões (v{versions.length - versions.indexOf(selectedA)} vs v
-            {versions.length - versions.indexOf(selectedB)})
+            {t('compareButton', {
+              a: versions.length - versions.indexOf(selectedA),
+              b: versions.length - versions.indexOf(selectedB),
+            })}
           </Button>
         </div>
       )}
@@ -183,13 +189,13 @@ export function VersionTimeline({ queryId, currentSql, onRestore, onCompare }: V
       <AlertDialog open={!!versionToRestore} onOpenChange={(open) => !open && setVersionToRestore(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Restaurar versão?</AlertDialogTitle>
+            <AlertDialogTitle>{t('restoreTitle')}</AlertDialogTitle>
             <AlertDialogDescription>
-              Isso substituirá o código SQL atual. Uma versão de backup do código atual será criada automaticamente.
+              {t('restoreDescription')}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={isRestoring}>Cancelar</AlertDialogCancel>
+            <AlertDialogCancel disabled={isRestoring}>{tCommon('cancel')}</AlertDialogCancel>
             <AlertDialogAction
               onClick={(e) => {
                 e.preventDefault()
@@ -198,7 +204,7 @@ export function VersionTimeline({ queryId, currentSql, onRestore, onCompare }: V
               disabled={isRestoring}
               className="bg-primary text-primary-foreground"
             >
-              {isRestoring ? 'Restaurando...' : 'Confirmar Restauração'}
+              {isRestoring ? t('restoring') : t('confirmRestore')}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

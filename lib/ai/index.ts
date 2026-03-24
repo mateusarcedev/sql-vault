@@ -1,0 +1,44 @@
+import { AIAnalysisResult, AIProvider } from '@/types/ai'
+import { analyzeWithOllama } from './providers/ollama'
+import { analyzeWithOpenAI } from './providers/openai'
+import { analyzeWithAnthropic } from './providers/anthropic'
+import { analyzeWithGemini } from './providers/gemini'
+
+type AnalyzeConfig = {
+  provider: AIProvider
+  model: string
+  openaiApiKey: string | null
+  anthropicApiKey: string | null
+  geminiApiKey: string | null
+}
+
+export async function analyzeSQL(
+  sql: string,
+  dialect: string,
+  config: AnalyzeConfig
+): Promise<AIAnalysisResult> {
+  try {
+    switch (config.provider) {
+      case 'ollama':
+        return await analyzeWithOllama(sql, dialect, config.model)
+
+      case 'openai':
+        if (!config.openaiApiKey) throw new Error('Chave da OpenAI não configurada')
+        return await analyzeWithOpenAI(sql, dialect, config.model, config.openaiApiKey)
+
+      case 'anthropic':
+        if (!config.anthropicApiKey) throw new Error('Chave da Anthropic não configurada')
+        return await analyzeWithAnthropic(sql, dialect, config.model, config.anthropicApiKey)
+
+      case 'gemini':
+        if (!config.geminiApiKey) throw new Error('Chave do Gemini não configurada')
+        return await analyzeWithGemini(sql, dialect, config.model, config.geminiApiKey)
+
+      default:
+        throw new Error('Provedor de IA desconhecido')
+    }
+  } catch (error) {
+    if (error instanceof Error) throw error
+    throw new Error('Erro desconhecido ao chamar o provedor de IA')
+  }
+}

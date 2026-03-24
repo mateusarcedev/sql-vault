@@ -1,8 +1,10 @@
 'use client'
 
-import { useRouter, useSearchParams, usePathname } from 'next/navigation'
+import { useRouter, usePathname } from '@/i18n/navigation'
+import { useSearchParams } from 'next/navigation'
 import { Search, Plus } from 'lucide-react'
 import { useState, useEffect, useCallback } from 'react'
+import { useTranslations } from 'next-intl'
 
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -22,8 +24,9 @@ export function AppHeader({
   showSearch = true,
   showNewButton = true,
   onNewClick,
-  newButtonText = "Nova Consulta",
+  newButtonText,
 }: AppHeaderProps) {
+  const t = useTranslations('nav')
   const router = useRouter()
   const pathname = usePathname()
   const searchParams = useSearchParams()
@@ -62,7 +65,7 @@ export function AppHeader({
             <Search className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input
               type="search"
-              placeholder="Buscar consultas..."
+              placeholder={t('search')}
               className="pl-8"
               value={searchValue}
               onChange={(e) => handleSearch(e.target.value)}
@@ -72,7 +75,7 @@ export function AppHeader({
         {showNewButton && (
           <Button onClick={onNewClick || handleNewQuery} size="sm">
             <Plus className="mr-1 h-4 w-4" />
-            {newButtonText}
+            {newButtonText ?? t('newQuery')}
           </Button>
         )}
       </div>

@@ -1,7 +1,8 @@
 'use client'
 
 import * as React from 'react'
-import { useRouter } from 'next/navigation'
+import { useTranslations } from 'next-intl'
+import { useRouter } from '@/i18n/navigation'
 import { useQuery } from '@tanstack/react-query'
 import { useDebounce } from '@/hooks/use-debounce'
 import {
@@ -26,23 +27,23 @@ import { useUIStore } from '@/store/ui-store'
 import { DATABASE_COLORS, type Query, type Tag } from '@/types/query'
 
 export function CommandPalette() {
+  const t = useTranslations('commandPalette')
   const router = useRouter()
   const { commandPaletteOpen, closeCommandPalette } = useUIStore()
   const [internalSearch, setInternalSearch] = React.useState('')
   const [debouncedSearch] = useDebounce(internalSearch, 200)
 
   const isTagSearch = debouncedSearch.startsWith('#')
-  const searchTerm = isTagSearch 
-    ? debouncedSearch.slice(1).trim() 
+  const searchTerm = isTagSearch
+    ? debouncedSearch.slice(1).trim()
     : debouncedSearch.trim()
 
   const { data: searchResults, isLoading } = useQuery({
     queryKey: ['search', isTagSearch ? 'tags' : 'queries', searchTerm],
     queryFn: async () => {
       if (!searchTerm && !isTagSearch) return { queries: [], tags: [] }
-      
+
       if (isTagSearch) {
-        // Busca tags
         const res = await fetch('/api/tags')
         if (!res.ok) return { queries: [], tags: [] }
         const tags: Tag[] = await res.json()
@@ -53,16 +54,14 @@ export function CommandPalette() {
         }
       }
 
-      // Busca queries
       const res = await fetch(`/api/queries?search=${encodeURIComponent(searchTerm)}`)
       if (!res.ok) return { queries: [], tags: [] }
       const queries: Query[] = await res.json()
       return { queries: queries.slice(0, 8), tags: [] }
     },
-    enabled: commandPaletteOpen // Só busca se o palette estiver aberto
+    enabled: commandPaletteOpen
   })
 
-  // Atalho global Cmd+K via Providers/hook global (configurado no Providers.tsx ou aqui mesmo)
   React.useEffect(() => {
     const down = (e: KeyboardEvent) => {
       if ((e.key === 'k' || e.key === 'K') && (e.metaKey || e.ctrlKey)) {
@@ -90,22 +89,22 @@ export function CommandPalette() {
     <CommandDialog open={commandPaletteOpen} onOpenChange={(open) => {
       if (!open) closeCommandPalette()
     }}>
-      <CommandInput 
-        placeholder="Digite para buscar consultas ou # para tags..." 
+      <CommandInput
+        placeholder={t('placeholder')}
         value={internalSearch}
         onValueChange={setInternalSearch}
       />
       <CommandList>
         <CommandEmpty>
-          {isLoading ? 'Buscando...' : `Nenhuma consulta encontrada para '${internalSearch}'.`}
+          {isLoading ? t('searching') : t('noResults', { search: internalSearch })}
         </CommandEmpty>
 
         {!isTagSearch && queries.length > 0 && (
-          <CommandGroup heading="Consultas">
+          <CommandGroup heading={t('queriesGroup')}>
             {queries.map((query) => (
               <CommandItem
                 key={query.id}
-                value={query.title + query.id} // value usado apenas para keying interno se já filtrado via API
+                value={query.title + query.id}
                 onSelect={() => runCommand(() => router.push(`/consultas/${query.id}`))}
                 className="flex items-center gap-2"
               >
@@ -123,7 +122,7 @@ export function CommandPalette() {
         )}
 
         {isTagSearch && tags.length > 0 && (
-          <CommandGroup heading="Tags">
+          <CommandGroup heading={t('tagsGroup')}>
             {tags.map((tag) => (
               <CommandItem
                 key={tag.id}
@@ -140,21 +139,20 @@ export function CommandPalette() {
 
         {!isTagSearch && !internalSearch && (
           <>
-            <CommandGroup heading="Ações rápidas">
+            <CommandGroup heading={t('quickActions')}>
               <CommandItem onSelect={() => runCommand(() => router.push('/consultas?nova=true'))}>
                 <Plus className="mr-2 h-4 w-4" />
-                <span>Nova consulta</span>
+                <span>{t('newQuery')}</span>
               </CommandItem>
               <CommandItem onSelect={() => runCommand(() => {
-                // Simples redirect ou clique para o mesmo endpoint de exportação do settings
                 window.location.href = '/api/export'
               })}>
                 <Download className="mr-2 h-4 w-4" />
-                <span>Exportar dados</span>
+                <span>{t('exportData')}</span>
               </CommandItem>
               <CommandItem onSelect={() => runCommand(() => router.push('/settings'))}>
                 <Settings className="mr-2 h-4 w-4" />
-                <span>Configurações</span>
+                <span>{t('settings')}</span>
               </CommandItem>
             </CommandGroup>
           </>

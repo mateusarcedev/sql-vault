@@ -1,7 +1,8 @@
 'use client'
 
-import Link from 'next/link'
-import { usePathname } from 'next/navigation'
+import { usePathname } from '@/i18n/navigation'
+import { Link } from '@/i18n/navigation'
+import { useLocale, useTranslations } from 'next-intl'
 import {
   Database,
   Home,
@@ -31,53 +32,16 @@ import {
   SidebarSeparator,
 } from '@/components/ui/sidebar'
 import { Button } from '@/components/ui/button'
+import { LocaleSwitcher } from '@/components/locale-switcher'
 import { useQueryStore } from '@/store/query-store'
 import { useRoutineStore } from '@/store/routine-store'
 import { useUIStore } from '@/store/ui-store'
 import { useSession, signOut } from 'next-auth/react'
 
-const mainNavItems = [
-  {
-    title: 'Dashboard',
-    url: '/',
-    icon: Home,
-  },
-  {
-    title: 'Consultas',
-    url: '/consultas',
-    icon: FileCode2,
-  },
-  {
-    title: 'Rotinas',
-    url: '/routines',
-    icon: Code2,
-  },
-  {
-    title: 'Favoritas',
-    url: '/consultas?favoritas=true',
-    icon: Star,
-  },
-]
-
-const manageNavItems = [
-  {
-    title: 'Tags',
-    url: '/tags',
-    icon: Tags,
-  },
-  {
-    title: 'Lixeira',
-    url: '/lixeira',
-    icon: Trash2,
-  },
-  {
-    title: 'Configurações',
-    url: '/settings',
-    icon: Settings,
-  },
-]
-
 export function AppSidebar() {
+  const t = useTranslations('nav')
+  const tCommon = useTranslations('common')
+  const locale = useLocale()
   const pathname = usePathname()
   const { data: session } = useSession()
   const { getStats } = useQueryStore()
@@ -85,6 +49,19 @@ export function AppSidebar() {
   const { openCommandPalette } = useUIStore()
   const stats = getStats()
   const activeRoutinesCount = listRoutines().length
+
+  const mainNavItems = [
+    { titleKey: 'dashboard', url: '/', icon: Home },
+    { titleKey: 'queries', url: '/consultas', icon: FileCode2 },
+    { titleKey: 'routines', url: '/routines', icon: Code2 },
+    { titleKey: 'favorites', url: '/consultas?favoritas=true', icon: Star },
+  ]
+
+  const manageNavItems = [
+    { titleKey: 'tags', url: '/tags', icon: Tags },
+    { titleKey: 'trash', url: '/lixeira', icon: Trash2 },
+    { titleKey: 'settings', url: '/settings', icon: Settings },
+  ]
 
   const isActive = (url: string) => {
     if (url === '/') return pathname === '/'
@@ -109,7 +86,7 @@ export function AppSidebar() {
           onClick={openCommandPalette}
         >
           <Search className="mr-2 h-4 w-4" />
-          <span className="flex-1 text-left">Buscar...</span>
+          <span className="flex-1 text-left">{t('search')}</span>
           <kbd className="pointer-events-none inline-flex h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground opacity-100">
             <span className="text-xs">⌘</span>K
           </kbd>
@@ -124,25 +101,25 @@ export function AppSidebar() {
             <Button asChild className="w-full justify-start gap-2">
               <Link href="/consultas?nova=true">
                 <Plus className="h-4 w-4" />
-                Nova Consulta
+                {t('newQuery')}
               </Link>
             </Button>
           </div>
         </SidebarGroup>
 
         <SidebarGroup>
-          <SidebarGroupLabel>Menu</SidebarGroupLabel>
+          <SidebarGroupLabel>{t('menu')}</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {mainNavItems.map((item) => (
-                <SidebarMenuItem key={item.title}>
+                <SidebarMenuItem key={item.titleKey}>
                   <SidebarMenuButton asChild isActive={isActive(item.url)}>
                     <Link href={item.url} className="flex justify-between w-full">
                       <div className="flex items-center gap-2">
                         <item.icon className="h-4 w-4" />
-                        <span>{item.title}</span>
+                        <span>{t(item.titleKey as any)}</span>
                       </div>
-                      {item.title === 'Rotinas' && activeRoutinesCount > 0 && (
+                      {item.titleKey === 'routines' && activeRoutinesCount > 0 && (
                         <span className="ml-auto inline-flex items-center justify-center rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-medium text-primary">
                           {activeRoutinesCount}
                         </span>
@@ -156,15 +133,15 @@ export function AppSidebar() {
         </SidebarGroup>
 
         <SidebarGroup>
-          <SidebarGroupLabel>Gerenciar</SidebarGroupLabel>
+          <SidebarGroupLabel>{t('manage')}</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {manageNavItems.map((item) => (
-                <SidebarMenuItem key={item.title}>
+                <SidebarMenuItem key={item.titleKey}>
                   <SidebarMenuButton asChild isActive={isActive(item.url)}>
                     <Link href={item.url}>
                       <item.icon className="h-4 w-4" />
-                      <span>{item.title}</span>
+                      <span>{t(item.titleKey as any)}</span>
                     </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
@@ -177,7 +154,7 @@ export function AppSidebar() {
       <SidebarFooter className="p-4 space-y-4">
         <div className="rounded-lg border bg-muted/50 p-3">
           <div className="text-xs font-medium text-muted-foreground">
-            Total de consultas
+            {t('totalQueries')}
           </div>
           <div className="mt-1 text-2xl font-bold">{stats.totalQueries}</div>
           <div className="mt-2 flex items-center gap-4 text-xs text-muted-foreground">
@@ -187,10 +164,12 @@ export function AppSidebar() {
             </span>
             <span className="flex items-center gap-1">
               <FileCode2 className="h-3 w-3" />
-              {stats.totalCopies} cópias
+              {stats.totalCopies} {tCommon('copies')}
             </span>
           </div>
         </div>
+
+        <LocaleSwitcher />
 
         {session?.user && (
           <div className="flex items-center justify-between gap-2 px-1">
@@ -211,7 +190,7 @@ export function AppSidebar() {
               variant="ghost"
               size="icon"
               className="h-8 w-8 text-muted-foreground hover:text-destructive"
-              onClick={() => signOut({ callbackUrl: '/login' })}
+              onClick={() => signOut({ callbackUrl: `/${locale}/login` })}
             >
               <LogOut className="h-4 w-4" />
             </Button>

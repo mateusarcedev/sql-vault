@@ -3,7 +3,8 @@
 import { DiffEditor } from '@monaco-editor/react'
 import { X, Calendar, Clock } from 'lucide-react'
 import { format } from 'date-fns'
-import { ptBR } from 'date-fns/locale'
+import { useTranslations } from 'next-intl'
+import { useDateFnsLocale } from '@/hooks/use-date-fns-locale'
 
 import {
   Dialog,
@@ -22,10 +23,13 @@ interface VersionDiffModalProps {
 }
 
 export function VersionDiffModal({ open, onClose, versionA, versionB }: VersionDiffModalProps) {
+  const t = useTranslations('versionDiff')
+  const dateFnsLocale = useDateFnsLocale()
+
   if (!versionA || !versionB) return null
 
   const formatVersionDate = (date: string) => {
-    return format(new Date(date), "dd 'de' MMMM 'de' yyyy 'às' HH:mm", { locale: ptBR })
+    return format(new Date(date), 'PPp', { locale: dateFnsLocale })
   }
 
   return (
@@ -34,7 +38,7 @@ export function VersionDiffModal({ open, onClose, versionA, versionB }: VersionD
         <DialogHeader className="p-4 border-b shrink-0 flex flex-row items-center justify-between space-y-0">
           <DialogTitle className="flex items-center gap-2 text-xl">
             <Clock className="h-5 w-5 text-primary" />
-            Comparação de Versões
+            {t('title')}
           </DialogTitle>
           <Button variant="ghost" size="icon" onClick={onClose} className="rounded-full">
             <X className="h-4 w-4" />
@@ -44,7 +48,7 @@ export function VersionDiffModal({ open, onClose, versionA, versionB }: VersionD
         <div className="grid grid-cols-2 bg-muted/30 border-b shrink-0">
           <div className="p-3 border-r flex items-center justify-between">
             <div className="flex flex-col gap-0.5">
-              <span className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider">Versão A (Original)</span>
+              <span className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider">{t('versionA')}</span>
               <span className="text-sm font-medium flex items-center gap-1.5">
                 <Calendar className="h-3.5 w-3.5" />
                 {formatVersionDate(versionA.createdAt)}
@@ -53,7 +57,7 @@ export function VersionDiffModal({ open, onClose, versionA, versionB }: VersionD
           </div>
           <div className="p-4 flex items-center justify-between bg-primary/5">
           <div className="flex flex-col gap-0.5">
-              <span className="text-[10px] uppercase font-bold text-primary/70 tracking-wider">Versão B (Modificada)</span>
+              <span className="text-[10px] uppercase font-bold text-primary/70 tracking-wider">{t('versionB')}</span>
               <span className="text-sm font-medium flex items-center gap-1.5 text-primary">
                 <Calendar className="h-3.5 w-3.5" />
                 {formatVersionDate(versionB.createdAt)}
@@ -68,7 +72,7 @@ export function VersionDiffModal({ open, onClose, versionA, versionB }: VersionD
             modified={versionB.sql}
             language="sql"
             theme="vs-dark"
-            loading={<div className="flex h-full items-center justify-center bg-zinc-950 text-white">Carregando comparador...</div>}
+            loading={<div className="flex h-full items-center justify-center bg-zinc-950 text-white">{t('loading')}</div>}
             options={{
               readOnly: true,
               renderSideBySide: true,

@@ -1,12 +1,15 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { useRouter, useSearchParams } from 'next/navigation'
+import { useRouter } from '@/i18n/navigation'
+import { useSearchParams } from 'next/navigation'
 import { format as formatSQL } from 'sql-formatter'
 import CodeMirror from '@uiw/react-codemirror'
 import { sql } from '@codemirror/lang-sql'
 import { toast } from 'sonner'
 import { Wand2, X, Loader2 } from 'lucide-react'
+import { useTranslations } from 'next-intl'
+import { AIAnalysisPanel } from '@/components/ai-analysis-panel'
 
 import {
   Sheet,
@@ -34,6 +37,8 @@ interface QueryDrawerProps {
 }
 
 export function QueryDrawer({ open, onOpenChange, editQuery }: QueryDrawerProps) {
+  const t = useTranslations('queryDrawer')
+  const tCommon = useTranslations('common')
   const router = useRouter()
   const searchParams = useSearchParams()
   const { createQuery, updateQuery, addVersion, tags, isSubmitting } = useQueryStore()
@@ -47,8 +52,16 @@ export function QueryDrawer({ open, onOpenChange, editQuery }: QueryDrawerProps)
   const [status, setStatus] = useState<'active' | 'draft'>('active')
   const [saveAsNewVersion, setSaveAsNewVersion] = useState(false)
   const [versionDescription, setVersionDescription] = useState('')
+  const [hasAIConfigured, setHasAIConfigured] = useState(false)
 
   const isEditing = !!editQuery
+
+  useEffect(() => {
+    fetch('/api/ai/config')
+      .then((res) => res.ok ? res.json() : null)
+      .then((data) => setHasAIConfigured(!!data?.provider))
+      .catch(() => {})
+  }, [])
 
   useEffect(() => {
     if (editQuery) {
@@ -77,27 +90,27 @@ export function QueryDrawer({ open, onOpenChange, editQuery }: QueryDrawerProps)
   const handleFormatSQL = useCallback(() => {
     try {
       const formatted = formatSQL(sqlCode, {
-        language: database === 'postgresql' ? 'postgresql' : 
-                  database === 'mysql' ? 'mysql' : 
-                  database === 'sqlserver' ? 'tsql' : 
+        language: database === 'postgresql' ? 'postgresql' :
+                  database === 'mysql' ? 'mysql' :
+                  database === 'sqlserver' ? 'tsql' :
                   database === 'oracle' ? 'plsql' : 'sql',
         tabWidth: 2,
         keywordCase: 'upper',
       })
       setSqlCode(formatted)
-      toast.success('SQL formatado com sucesso!')
+      toast.success(t('formatSuccess'))
     } catch {
-      toast.error('Erro ao formatar SQL')
+      toast.error(t('formatError'))
     }
-  }, [sqlCode, database])
+  }, [sqlCode, database, t])
 
   const handleSubmit = async () => {
     if (!title.trim()) {
-      toast.error('Título é obrigatório')
+      toast.error(t('titleRequired'))
       return
     }
     if (!sqlCode.trim()) {
-      toast.error('Código SQL é obrigatório')
+      toast.error(t('sqlRequired'))
       return
     }
 
@@ -107,9 +120,9 @@ export function QueryDrawer({ open, onOpenChange, editQuery }: QueryDrawerProps)
           await addVersion(
             editQuery.id,
             sqlCode,
-            versionDescription || 'Atualização'
+            versionDescription || t('updateFallback')
           )
-          toast.success('Nova versão salva!')
+          toast.success(t('versionSaved'))
         } else {
           await updateQuery(editQuery.id, {
             title,
@@ -120,7 +133,7 @@ export function QueryDrawer({ open, onOpenChange, editQuery }: QueryDrawerProps)
             isFavorite,
             status,
           })
-          toast.success('Consulta atualizada!')
+          toast.success(t('updateSuccess'))
         }
       } else {
         await createQuery({
@@ -132,18 +145,26 @@ export function QueryDrawer({ open, onOpenChange, editQuery }: QueryDrawerProps)
           isFavorite,
           status,
         })
-        toast.success('Consulta criada!')
+        toast.success(t('createSuccess'))
       }
       onOpenChange(false)
-      
-      // Remove query params
+
       const params = new URLSearchParams(searchParams.toString())
       params.delete('nova')
       params.delete('editar')
       router.push(`/consultas${params.toString() ? `?${params.toString()}` : ''}`)
     } catch {
-      toast.error('Erro ao salvar consulta')
+      toast.error(t('saveError'))
     }
+  }
+
+  const handleApplySuggestions = (suggestedName: string, suggestedTagNames: string[]) => {
+    if (suggestedName) setTitle(suggestedName)
+    const matchedIds = tags
+      .filter((t) => suggestedTagNames.some((name) => name.toLowerCase() === t.name.toLowerCase()))
+      .map((t) => t.id)
+    if (matchedIds.length > 0) setSelectedTags(matchedIds)
+    toast.success(t('suggestionsApplied'))
   }
 
   const handleToggleTag = (tagId: string) => {
@@ -167,31 +188,29 @@ export function QueryDrawer({ open, onOpenChange, editQuery }: QueryDrawerProps)
       <SheetContent className="w-full sm:max-w-2xl lg:max-w-3xl overflow-y-auto p-0 flex flex-col gap-0">
         <SheetHeader className="px-6 py-4 border-b">
           <SheetTitle>
-            {isEditing ? 'Editar Consulta' : 'Nova Consulta'}
+            {isEditing ? t('editTitle') : t('newTitle')}
           </SheetTitle>
           <SheetDescription>
-            {isEditing
-              ? 'Atualize os dados da consulta SQL'
-              : 'Crie uma nova consulta SQL para sua biblioteca'}
+            {isEditing ? t('editDescription') : t('newDescription')}
           </SheetDescription>
         </SheetHeader>
 
         <div className="flex-1 overflow-y-auto px-6 py-6 space-y-6 min-w-0">
           <div className="space-y-2">
-            <Label htmlFor="title">Título</Label>
+            <Label htmlFor="title">{t('titleLabel')}</Label>
             <Input
               id="title"
-              placeholder="Ex: Usuários ativos por mês"
+              placeholder={t('titlePlaceholder')}
               value={title}
               onChange={(e) => setTitle(e.target.value)}
             />
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="description">Descrição</Label>
+            <Label htmlFor="description">{t('descriptionLabel')}</Label>
             <Textarea
               id="description"
-              placeholder="Descreva o que esta consulta faz..."
+              placeholder={t('descriptionPlaceholder')}
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               rows={2}
@@ -199,7 +218,7 @@ export function QueryDrawer({ open, onOpenChange, editQuery }: QueryDrawerProps)
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="database">Banco de Dados</Label>
+            <Label htmlFor="database">{t('databaseLabel')}</Label>
             <Select value={database} onValueChange={(v) => setDatabase(v as DatabaseType)}>
               <SelectTrigger className="w-full">
                 <SelectValue />
@@ -216,7 +235,7 @@ export function QueryDrawer({ open, onOpenChange, editQuery }: QueryDrawerProps)
 
           <div className="space-y-2">
             <div className="flex items-center justify-between">
-              <Label>Código SQL</Label>
+              <Label>{t('sqlLabel')}</Label>
               <Button
                 type="button"
                 variant="ghost"
@@ -225,7 +244,7 @@ export function QueryDrawer({ open, onOpenChange, editQuery }: QueryDrawerProps)
                 className="h-7 gap-1 text-xs"
               >
                 <Wand2 className="h-3 w-3" />
-                Formatar
+                {t('format')}
               </Button>
             </div>
             <div className="overflow-hidden rounded-md border">
@@ -247,8 +266,16 @@ export function QueryDrawer({ open, onOpenChange, editQuery }: QueryDrawerProps)
             </div>
           </div>
 
+          <AIAnalysisPanel
+            sql={sqlCode}
+            dialect={database}
+            availableTags={tags}
+            onApplySuggestions={handleApplySuggestions}
+            hasAIConfigured={hasAIConfigured}
+          />
+
           <div className="space-y-2">
-            <Label>Tags</Label>
+            <Label>{t('tagsLabel')}</Label>
             <div className="flex flex-wrap gap-2">
               {tags.map((tag) => {
                 const isSelected = selectedTags.includes(tag.id)
@@ -278,7 +305,7 @@ export function QueryDrawer({ open, onOpenChange, editQuery }: QueryDrawerProps)
               })}
               {tags.length === 0 && (
                 <span className="text-sm text-muted-foreground">
-                  Nenhuma tag disponível
+                  {t('noTagsAvailable')}
                 </span>
               )}
             </div>
@@ -291,15 +318,15 @@ export function QueryDrawer({ open, onOpenChange, editQuery }: QueryDrawerProps)
               onCheckedChange={(checked) => setIsFavorite(checked === true)}
             />
             <Label htmlFor="favorite" className="cursor-pointer">
-              Marcar como favorita
+              {t('markFavorite')}
             </Label>
           </div>
 
           <div className="flex items-center justify-between rounded-lg border p-4">
             <div className="space-y-0.5">
-              <Label htmlFor="status">Status da Consulta</Label>
+              <Label htmlFor="status">{t('queryStatus')}</Label>
               <p className="text-xs text-muted-foreground">
-                {status === 'active' ? 'Ativa (visível na biblioteca)' : 'Rascunho (apenas para você)'}
+                {status === 'active' ? t('statusActive') : t('statusDraft')}
               </p>
             </div>
             <Switch
@@ -318,12 +345,12 @@ export function QueryDrawer({ open, onOpenChange, editQuery }: QueryDrawerProps)
                   onCheckedChange={(checked) => setSaveAsNewVersion(checked === true)}
                 />
                 <Label htmlFor="saveAsNewVersion" className="cursor-pointer">
-                  Salvar como nova versão
+                  {t('saveAsVersion')}
                 </Label>
               </div>
               {saveAsNewVersion && (
                 <Input
-                  placeholder="Descrição da versão (opcional)"
+                  placeholder={t('versionDescPlaceholder')}
                   value={versionDescription}
                   onChange={(e) => setVersionDescription(e.target.value)}
                 />
@@ -333,7 +360,7 @@ export function QueryDrawer({ open, onOpenChange, editQuery }: QueryDrawerProps)
 
           {selectedTags.length > 0 && (
             <div className="space-y-2">
-              <Label>Tags selecionadas</Label>
+              <Label>{t('selectedTags')}</Label>
               <div className="flex flex-wrap gap-2">
                 {selectedTags.map((tagId) => {
                   const tag = tags.find((t) => t.id === tagId)
@@ -354,11 +381,11 @@ export function QueryDrawer({ open, onOpenChange, editQuery }: QueryDrawerProps)
 
         <SheetFooter className="px-6 py-4 border-t mt-0 flex-row justify-end gap-3 bg-background/80 backdrop-blur-sm sticky bottom-0">
           <Button variant="outline" onClick={handleClose}>
-            Cancelar
+            {tCommon('cancel')}
           </Button>
           <Button onClick={handleSubmit} disabled={isSubmitting}>
             {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            {isEditing ? 'Salvar Alterações' : 'Criar Consulta'}
+            {isEditing ? t('saveChanges') : t('create')}
           </Button>
         </SheetFooter>
       </SheetContent>

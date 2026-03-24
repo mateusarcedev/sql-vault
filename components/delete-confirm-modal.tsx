@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { AlertTriangle, Loader2 } from 'lucide-react'
+import { useTranslations } from 'next-intl'
 
 import {
   Dialog,
@@ -31,11 +32,12 @@ export function DeleteConfirmModal({
   onOpenChange,
   title,
   description,
-  confirmText = 'DELETAR',
+  confirmText = 'DELETE',
   requireConfirmation = true,
   isLoading = false,
   onConfirm,
 }: DeleteConfirmModalProps) {
+  const t = useTranslations('deleteModal')
   const [inputValue, setInputValue] = useState('')
 
   const canConfirm = requireConfirmation
@@ -73,7 +75,7 @@ export function DeleteConfirmModal({
         {requireConfirmation && (
           <div className="space-y-2">
             <Label htmlFor="confirm-delete">
-              Digite <strong>{confirmText}</strong> para confirmar
+              {t('typeToConfirm', { confirmText })}
             </Label>
             <Input
               id="confirm-delete"
@@ -91,7 +93,7 @@ export function DeleteConfirmModal({
             onClick={() => handleOpenChange(false)}
             disabled={isLoading}
           >
-            Cancelar
+            {t('cancel')}
           </Button>
           <Button
             variant="destructive"
@@ -99,7 +101,7 @@ export function DeleteConfirmModal({
             disabled={!canConfirm || isLoading}
           >
             {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            Deletar
+            {t('delete')}
           </Button>
         </DialogFooter>
       </DialogContent>
