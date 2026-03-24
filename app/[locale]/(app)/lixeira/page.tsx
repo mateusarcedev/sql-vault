@@ -257,8 +257,8 @@ export default function TrashPage() {
                 </TabsList>
                 <p className="text-sm text-muted-foreground">
                   {activeTab === 'queries'
-                    ? t('queriesInTrash', { count: trashedQueries.length })
-                    : t('routinesInTrash', { count: trashedRoutines.length })
+                    ? t(trashedQueries.length === 1 ? 'queriesInTrash_one' : 'queriesInTrash_other', { count: trashedQueries.length })
+                    : t(trashedRoutines.length === 1 ? 'routinesInTrash_one' : 'routinesInTrash_other', { count: trashedRoutines.length })
                   }
                 </p>
               </div>

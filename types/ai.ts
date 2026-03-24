@@ -12,6 +12,7 @@ export type PerformanceIssue = {
 export type AIAnalysisResult = {
   explanation: string
   suggestedName: string
+  suggestedDescription: string
   suggestedTags: string[]
   performanceReview: PerformanceIssue[]
 }

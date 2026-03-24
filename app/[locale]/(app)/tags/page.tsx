@@ -50,7 +50,7 @@ function TagCard({
           <div>
             <p className="font-medium">{tag.name}</p>
             <p className="text-xs text-muted-foreground">
-              {t('queries', { count: queryCount })}
+              {t(queryCount === 1 ? 'queries_one' : 'queries_other', { count: queryCount })}
             </p>
           </div>
         </div>

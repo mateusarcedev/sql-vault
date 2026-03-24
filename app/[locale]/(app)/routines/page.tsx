@@ -278,7 +278,9 @@ function RoutineListContent() {
           </div>
 
           <div className="text-sm text-muted-foreground">
-            {t('found', { count: filteredRoutines.length })}
+            {t(filteredRoutines.length === 1 ? 'found_one' : 'found_other', {
+              count: filteredRoutines.length,
+            })}
           </div>
 
           {isLoading ? (

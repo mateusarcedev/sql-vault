@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { useTranslations } from 'next-intl'
 import { useDateFnsLocale } from '@/hooks/use-date-fns-locale'
-import { Download, Upload, FileJson, AlertCircle, CheckCircle2, Key, Plus, Trash2, Copy, Check, Info, BrainCircuit, Eye, EyeOff, Loader2 } from 'lucide-react'
+import { Download, Upload, FileJson, AlertCircle, CheckCircle2, Key, Plus, Trash2, Copy, Check, Info, BrainCircuit, Eye, EyeOff, Loader2, RefreshCcw } from 'lucide-react'
 import { toast } from 'sonner'
 import { format } from 'date-fns'
 import { AppHeader } from '@/components/app-header'
@@ -80,6 +80,7 @@ export default function SettingsPage() {
   const [newKeyName, setNewKeyName] = useState('')
   const [generatedKey, setGeneratedKey] = useState<NewApiKey | null>(null)
   const [isCopied, setIsCopied] = useState(false)
+  const [regeneratingKeyId, setRegeneratingKeyId] = useState<string | null>(null)
 
   const [aiProvider, setAiProvider] = useState<AIProvider | ''>('')
   const [aiModel, setAiModel] = useState('')
@@ -148,6 +149,7 @@ export default function SettingsPage() {
       setAnthropicKey('')
       setGeminiKey('')
       queryClient.invalidateQueries({ queryKey: ['ai-config'] })
+      queryClient.invalidateQueries({ queryKey: ['ai-models'] })
     },
     onError: (error: any) => {
       toast.error(error.message)
@@ -201,6 +203,31 @@ export default function SettingsPage() {
     },
     onError: (error: any) => {
       toast.error(error.message)
+    }
+  })
+
+  const regenerateMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const res = await fetch(`/api/keys/${id}/regenerate`, {
+        method: 'POST'
+      })
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}))
+        throw new Error(data.message || tKeys('regenerateError'))
+      }
+      return res.json()
+    },
+    onSuccess: (data: NewApiKey) => {
+      setGeneratedKey(data)
+      setIsCopied(false)
+      setIsTokenDialogOpen(true)
+      setRegeneratingKeyId(null)
+      toast.success(tKeys('regenerateSuccess'))
+      queryClient.invalidateQueries({ queryKey: ['api-keys'] })
+    },
+    onError: (error: any) => {
+      setRegeneratingKeyId(null)
+      toast.error(error.message || tKeys('regenerateError'))
     }
   })
 
@@ -344,7 +371,7 @@ export default function SettingsPage() {
                         <TableHead>{tKeys('name')}</TableHead>
                         <TableHead>{tKeys('createdAt')}</TableHead>
                         <TableHead>{tKeys('lastUsed')}</TableHead>
-                        <TableHead className="w-[100px]"></TableHead>
+                        <TableHead className="w-35"></TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -360,30 +387,59 @@ export default function SettingsPage() {
                               : tKeys('neverUsed')}
                           </TableCell>
                           <TableCell>
-                            <AlertDialog>
-                              <AlertDialogTrigger asChild>
-                                <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10">
-                                  <Trash2 className="h-4 w-4" />
-                                </Button>
-                              </AlertDialogTrigger>
-                              <AlertDialogContent>
-                                <AlertDialogHeader>
-                                  <AlertDialogTitle>{tKeys('revokeTitle')}</AlertDialogTitle>
-                                  <AlertDialogDescription>
-                                    {tKeys('revokeDescription')}
-                                  </AlertDialogDescription>
-                                </AlertDialogHeader>
-                                <AlertDialogFooter>
-                                  <AlertDialogCancel>{tCommon('cancel')}</AlertDialogCancel>
-                                  <AlertDialogAction
-                                    onClick={() => deleteMutation.mutate(key.id)}
-                                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                                  >
-                                    {tKeys('revoke')}
-                                  </AlertDialogAction>
-                                </AlertDialogFooter>
-                              </AlertDialogContent>
-                            </AlertDialog>
+                            <div className="flex items-center gap-1">
+                              <AlertDialog>
+                                <AlertDialogTrigger asChild>
+                                  <Button variant="ghost" size="icon" className="h-8 w-8">
+                                    <RefreshCcw className="h-4 w-4" />
+                                  </Button>
+                                </AlertDialogTrigger>
+                                <AlertDialogContent>
+                                  <AlertDialogHeader>
+                                    <AlertDialogTitle>{tKeys('regenerateTitle')}</AlertDialogTitle>
+                                    <AlertDialogDescription>
+                                      {tKeys('regenerateDescription')}
+                                    </AlertDialogDescription>
+                                  </AlertDialogHeader>
+                                  <AlertDialogFooter>
+                                    <AlertDialogCancel>{tCommon('cancel')}</AlertDialogCancel>
+                                    <AlertDialogAction
+                                      onClick={() => {
+                                        setRegeneratingKeyId(key.id)
+                                        regenerateMutation.mutate(key.id)
+                                      }}
+                                    >
+                                      {regeneratingKeyId === key.id ? tKeys('regenerating') : tKeys('regenerate')}
+                                    </AlertDialogAction>
+                                  </AlertDialogFooter>
+                                </AlertDialogContent>
+                              </AlertDialog>
+
+                              <AlertDialog>
+                                <AlertDialogTrigger asChild>
+                                  <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10">
+                                    <Trash2 className="h-4 w-4" />
+                                  </Button>
+                                </AlertDialogTrigger>
+                                <AlertDialogContent>
+                                  <AlertDialogHeader>
+                                    <AlertDialogTitle>{tKeys('revokeTitle')}</AlertDialogTitle>
+                                    <AlertDialogDescription>
+                                      {tKeys('revokeDescription')}
+                                    </AlertDialogDescription>
+                                  </AlertDialogHeader>
+                                  <AlertDialogFooter>
+                                    <AlertDialogCancel>{tCommon('cancel')}</AlertDialogCancel>
+                                    <AlertDialogAction
+                                      onClick={() => deleteMutation.mutate(key.id)}
+                                      className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                    >
+                                      {tKeys('revoke')}
+                                    </AlertDialogAction>
+                                  </AlertDialogFooter>
+                                </AlertDialogContent>
+                              </AlertDialog>
+                            </div>
                           </TableCell>
                         </TableRow>
                       ))}

@@ -158,8 +158,13 @@ export function QueryDrawer({ open, onOpenChange, editQuery }: QueryDrawerProps)
     }
   }
 
-  const handleApplySuggestions = (suggestedName: string, suggestedTagNames: string[]) => {
+  const handleApplySuggestions = (
+    suggestedName: string,
+    suggestedDescription: string,
+    suggestedTagNames: string[]
+  ) => {
     if (suggestedName) setTitle(suggestedName)
+    if (suggestedDescription) setDescription(suggestedDescription)
     const matchedIds = tags
       .filter((t) => suggestedTagNames.some((name) => name.toLowerCase() === t.name.toLowerCase()))
       .map((t) => t.id)

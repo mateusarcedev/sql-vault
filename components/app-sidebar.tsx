@@ -33,6 +33,7 @@ import {
 } from '@/components/ui/sidebar'
 import { Button } from '@/components/ui/button'
 import { LocaleSwitcher } from '@/components/locale-switcher'
+import { ThemeToggle } from '@/components/theme-toggle'
 import { useQueryStore } from '@/store/query-store'
 import { useRoutineStore } from '@/store/routine-store'
 import { useUIStore } from '@/store/ui-store'
@@ -169,7 +170,12 @@ export function AppSidebar() {
           </div>
         </div>
 
-        <LocaleSwitcher />
+        <div className="flex items-center gap-2">
+          <div className="flex-1">
+            <LocaleSwitcher />
+          </div>
+          <ThemeToggle />
+        </div>
 
         {session?.user && (
           <div className="flex items-center justify-between gap-2 px-1">

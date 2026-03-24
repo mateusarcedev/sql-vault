@@ -2,6 +2,16 @@ import { useState } from 'react'
 import { toast } from 'sonner'
 import { AIAnalysisResult } from '@/types/ai'
 
+function normalizeAIResult(data: any): AIAnalysisResult {
+  return {
+    explanation: data?.explanation ?? '',
+    suggestedName: data?.suggestedName ?? '',
+    suggestedDescription: data?.suggestedDescription ?? '',
+    suggestedTags: Array.isArray(data?.suggestedTags) ? data.suggestedTags : [],
+    performanceReview: Array.isArray(data?.performanceReview) ? data.performanceReview : [],
+  }
+}
+
 export function useAIAnalyze() {
   const [isAnalyzing, setIsAnalyzing] = useState(false)
   const [result, setResult] = useState<AIAnalysisResult | null>(null)
@@ -25,7 +35,8 @@ export function useAIAnalyze() {
         const data = await res.json()
         throw new Error(data.message || 'Falha na análise')
       }
-      setResult(await res.json())
+      const payload = await res.json()
+      setResult(normalizeAIResult(payload))
     } catch (e: any) {
       setError(e.message)
       toast.error(e.message)

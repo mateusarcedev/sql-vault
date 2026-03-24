@@ -4,6 +4,7 @@ export function buildPrompt(sql: string, dialect: string): { system: string; use
 {
   "explanation": "string - explicação em português do que o SQL faz",
   "suggestedName": "string - nome descritivo em snake_case, ex: get_top_customers_by_revenue",
+  "suggestedDescription": "string - descrição curta e útil (1 frase) para mostrar no campo de descrição",
   "suggestedTags": ["string"] - array de 1 a 4 tags relevantes em português ou inglês, ex: ["analytics", "clientes", "receita"],
   "performanceReview": [
     {

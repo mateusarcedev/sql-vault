@@ -222,7 +222,9 @@ export default function QueryDetailPage({ params }: QueryDetailPageProps) {
             </span>
             <span className="flex items-center gap-1">
               <History className="h-4 w-4" />
-              {t('versions', { count: query.versions.length })}
+              {t(query.versions.length === 1 ? 'versions_one' : 'versions_other', {
+                count: query.versions.length,
+              })}
             </span>
           </div>
 

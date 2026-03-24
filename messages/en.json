@@ -232,6 +232,12 @@
       "createError": "Failed to create API Key",
       "revokeSuccess": "API Key revoked successfully",
       "revokeError": "Failed to revoke API Key",
+      "regenerateTitle": "Regenerate API Key?",
+      "regenerateDescription": "This will immediately invalidate the current key. You'll need to update all integrations using it.",
+      "regenerate": "Regenerate",
+      "regenerating": "Regenerating...",
+      "regenerateSuccess": "API Key regenerated successfully",
+      "regenerateError": "Failed to regenerate API Key",
       "copySuccess": "Token copied!",
       "copyError": "Error copying token"
     },
@@ -413,8 +419,9 @@
     "explanation": "Explanation",
     "suggestions": "Suggestions",
     "suggestedName": "Name:",
+    "suggestedDescription": "Description:",
     "suggestedTags": "Tags:",
-    "applySuggestions": "Apply name and tag suggestions",
+    "applySuggestions": "Apply name, description and tag suggestions",
     "performanceReview": "Performance Review",
     "noIssues": "No issues found.",
     "writeSQL": "Write the SQL before analyzing"

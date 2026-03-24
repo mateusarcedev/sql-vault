@@ -13,7 +13,7 @@ interface AIAnalysisPanelProps {
   sql: string
   dialect: string
   availableTags: Tag[]
-  onApplySuggestions: (name: string, tagNames: string[]) => void
+  onApplySuggestions: (name: string, description: string, tagNames: string[]) => void
   hasAIConfigured: boolean
 }
 
@@ -37,7 +37,7 @@ export function AIAnalysisPanel({
 
   const handleApply = () => {
     if (!result) return
-    onApplySuggestions(result.suggestedName, result.suggestedTags)
+    onApplySuggestions(result.suggestedName, result.suggestedDescription, result.suggestedTags)
   }
 
   return (
@@ -79,6 +79,12 @@ export function AIAnalysisPanel({
               <span className="text-xs text-muted-foreground shrink-0">{t('suggestedName')}</span>
               <Badge variant="secondary" className="font-mono text-xs">{result.suggestedName}</Badge>
             </div>
+            {result.suggestedDescription && (
+              <div className="space-y-1">
+                <span className="text-xs text-muted-foreground">{t('suggestedDescription')}</span>
+                <p className="text-xs rounded-md border bg-background p-2">{result.suggestedDescription}</p>
+              </div>
+            )}
             {result.suggestedTags.length > 0 && (
               <div className="flex items-center gap-2 flex-wrap">
                 <span className="text-xs text-muted-foreground shrink-0">{t('suggestedTags')}</span>

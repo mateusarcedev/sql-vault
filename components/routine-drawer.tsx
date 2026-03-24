@@ -196,8 +196,13 @@ export function RoutineDrawer({ open, onOpenChange, editRoutine }: RoutineDrawer
     }
   }
 
-  const handleApplySuggestions = (suggestedName: string, suggestedTagNames: string[]) => {
+  const handleApplySuggestions = (
+    suggestedName: string,
+    suggestedDescription: string,
+    suggestedTagNames: string[]
+  ) => {
     if (suggestedName) setName(suggestedName)
+    if (suggestedDescription) setDescription(suggestedDescription)
     const matchedIds = tags
       .filter((t) => suggestedTagNames.some((n) => n.toLowerCase() === t.name.toLowerCase()))
       .map((t) => t.id)

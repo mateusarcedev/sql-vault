@@ -17,6 +17,7 @@ const mockPrisma = {
   routineVersion: createDbMock(),
   tag: createDbMock(),
   apiKey: createDbMock(),
+  userAIConfig: createDbMock(),
   user: createDbMock(),
 };
 

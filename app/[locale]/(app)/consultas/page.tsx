@@ -240,7 +240,9 @@ function QueryListContent() {
           </div>
 
           <div className="text-sm text-muted-foreground">
-            {t('found', { count: filteredQueries.length })}
+            {t(filteredQueries.length === 1 ? 'found_one' : 'found_other', {
+              count: filteredQueries.length,
+            })}
           </div>
 
           {isLoading ? (
