@@ -28,8 +28,11 @@ import { Switch } from '@/components/ui/switch'
 import { TagChip } from '@/components/tag-chip'
 import { useRoutineStore } from '@/store/routine-store'
 import { useQueryStore } from '@/store/query-store'
+import { useDatabaseContextStore } from '@/store/database-context-store'
 import { DATABASE_LABELS, type DatabaseType } from '@/types/query'
 import type { Routine, RoutineType, RoutineParameter } from '@/types/routine'
+
+const NO_DATABASE_CONTEXT = '__none__'
 
 interface RoutineDrawerProps {
   open: boolean
@@ -74,15 +77,24 @@ const ROUTINE_TYPES: { value: RoutineType; label: string; icon: any }[] = [
 export function RoutineDrawer({ open, onOpenChange, editRoutine }: RoutineDrawerProps) {
   const t = useTranslations('routineDrawer')
   const tCommon = useTranslations('common')
+  const tDatabaseContexts = useTranslations('databaseContexts')
+  const tDatabaseHints = useTranslations('database.context')
   const router = useRouter()
   const searchParams = useSearchParams()
   const { create, update, isSubmitting } = useRoutineStore()
   const { tags } = useQueryStore()
+  const {
+    initialize: initializeDatabaseContexts,
+    listContexts,
+    isLoading: isLoadingDatabaseContexts,
+  } = useDatabaseContextStore()
 
   const [name, setName] = useState('')
   const [description, setDescription] = useState('')
   const [type, setType] = useState<RoutineType>('function')
   const [database, setDatabase] = useState<DatabaseType>('postgresql')
+  const [databaseId, setDatabaseId] = useState<string | null>(null)
+  const [isPublic, setIsPublic] = useState(false)
   const [sqlCode, setSqlCode] = useState(TEMPLATES.function)
   const [parameters, setParameters] = useState<RoutineParameter[]>([])
   const [returnType, setReturnType] = useState('')
@@ -92,6 +104,11 @@ export function RoutineDrawer({ open, onOpenChange, editRoutine }: RoutineDrawer
   const [hasAIConfigured, setHasAIConfigured] = useState(false)
 
   const isEditing = !!editRoutine
+  const databaseContexts = listContexts()
+  const selectedDatabaseContext = databaseId
+    ? databaseContexts.find((context) => context.id === databaseId) ?? null
+    : null
+  const canEnablePublic = Boolean(databaseId && selectedDatabaseContext?.isPublic)
 
   useEffect(() => {
     fetch('/api/ai/config')
@@ -101,11 +118,18 @@ export function RoutineDrawer({ open, onOpenChange, editRoutine }: RoutineDrawer
   }, [])
 
   useEffect(() => {
+    if (!open) return
+    void initializeDatabaseContexts('mine')
+  }, [open, initializeDatabaseContexts])
+
+  useEffect(() => {
     if (editRoutine) {
       setName(editRoutine.name)
       setDescription(editRoutine.description || '')
       setType(editRoutine.type)
       setDatabase(editRoutine.database)
+      setDatabaseId(editRoutine.databaseId ?? null)
+      setIsPublic(Boolean(editRoutine.databaseId) && Boolean(editRoutine.isPublic))
       setSqlCode(editRoutine.sql)
       setParameters([...editRoutine.parameters])
       setReturnType(editRoutine.returnType || '')
@@ -117,6 +141,8 @@ export function RoutineDrawer({ open, onOpenChange, editRoutine }: RoutineDrawer
       setDescription('')
       setType('function')
       setDatabase('postgresql')
+      setDatabaseId(null)
+      setIsPublic(false)
       setSqlCode(TEMPLATES.function)
       setParameters([])
       setReturnType('')
@@ -125,6 +151,11 @@ export function RoutineDrawer({ open, onOpenChange, editRoutine }: RoutineDrawer
       setStatus('active')
     }
   }, [editRoutine, open])
+
+  useEffect(() => {
+    if (canEnablePublic) return
+    setIsPublic(false)
+  }, [canEnablePublic])
 
   const handleTypeChange = (newType: RoutineType) => {
     if (sqlCode.trim() === TEMPLATES[type].trim() || sqlCode.trim() === '') {
@@ -169,6 +200,8 @@ export function RoutineDrawer({ open, onOpenChange, editRoutine }: RoutineDrawer
         description,
         type,
         database,
+        databaseId,
+        isPublic,
         sql: sqlCode,
         parameters: (type === 'function' || type === 'procedure') ? parameters : [],
         returnType: type === 'function' ? returnType : null,
@@ -282,6 +315,51 @@ export function RoutineDrawer({ open, onOpenChange, editRoutine }: RoutineDrawer
                 </SelectContent>
               </Select>
             </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="database-context">{tDatabaseContexts('sectionTitle')}</Label>
+            <Select
+              value={databaseId ?? NO_DATABASE_CONTEXT}
+              onValueChange={(value) => setDatabaseId(value === NO_DATABASE_CONTEXT ? null : value)}
+              disabled={isLoadingDatabaseContexts}
+            >
+              <SelectTrigger id="database-context">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value={NO_DATABASE_CONTEXT}>{tDatabaseContexts('empty')}</SelectItem>
+                {databaseContexts.map((context) => (
+                  <SelectItem key={context.id} value={context.id}>
+                    {context.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="rounded-lg border p-4 space-y-2">
+            <div className="flex items-center justify-between">
+              <div className="space-y-1">
+                <Label htmlFor="routine-public" className="text-sm font-medium">
+                  {tDatabaseContexts('visibility.public')}
+                </Label>
+                <p className="text-xs text-muted-foreground">
+                  {tDatabaseHints('required_for_public')}
+                </p>
+              </div>
+              <Switch
+                id="routine-public"
+                checked={isPublic}
+                onCheckedChange={setIsPublic}
+                disabled={!canEnablePublic}
+              />
+            </div>
+            {databaseId && !selectedDatabaseContext?.isPublic && (
+              <p className="text-xs text-amber-600 dark:text-amber-400">
+                {tDatabaseHints('must_be_public')}
+              </p>
+            )}
           </div>
 
           <div className="space-y-2">
@@ -433,6 +511,7 @@ export function RoutineDrawer({ open, onOpenChange, editRoutine }: RoutineDrawer
           <AIAnalysisPanel
             sql={sqlCode}
             dialect={database}
+            databaseId={databaseId}
             availableTags={tags}
             onApplySuggestions={handleApplySuggestions}
             hasAIConfigured={hasAIConfigured}

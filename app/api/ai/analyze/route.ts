@@ -14,10 +14,24 @@ export const POST = async (req: Request) => {
     }
 
     const body = await req.json()
-    const { sql, dialect } = body
+    const { sql, dialect, databaseId } = body
 
     if (!sql?.trim()) {
       return NextResponse.json({ message: 'SQL é obrigatório' }, { status: 400 })
+    }
+
+    let databaseContext = null
+    if (databaseId) {
+      databaseContext = await db.databaseContext.findFirst({
+        where: {
+          id: databaseId,
+          OR: [{ userId: session.user.id }, { isPublic: true }],
+        },
+      })
+
+      if (!databaseContext) {
+        return NextResponse.json({ message: 'Contexto de banco de dados não encontrado' }, { status: 404 })
+      }
     }
 
     const config = await db.userAIConfig.findUnique({
@@ -42,7 +56,7 @@ export const POST = async (req: Request) => {
         openaiApiKey: config.openaiApiKey,
         anthropicApiKey: config.anthropicApiKey,
         geminiApiKey: config.geminiApiKey,
-      })
+      }, databaseContext)
 
       const parsed = aiAnalysisResultSchema.safeParse(result)
       if (!parsed.success) {

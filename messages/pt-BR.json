@@ -298,6 +298,70 @@
       "importError": "Erro ao importar dados"
     }
   },
+  "databaseContexts": {
+    "pageTitle": "Database Contexts",
+    "sectionTitle": "Database Contexts",
+    "sectionDescription": "Gerencie contextos de banco para compartilhar schema e habilitar recursos públicos com segurança.",
+    "settingsDescription": "Gerencie rapidamente seus contextos e acesse a área completa para visualização de escopos.",
+    "settingsCardTitle": "Seus Contextos",
+    "settingsCardDescription": "Lista rápida dos seus contextos de banco mais recentes.",
+    "newContext": "Novo Contexto",
+    "openFullPage": "Abrir página completa",
+    "loading": "Carregando contextos...",
+    "empty": "Nenhum contexto de banco criado ainda.",
+    "ownerFallback": "Sem nome",
+    "deleteTitle": "Excluir Database Context?",
+    "deleteDescription": "Tem certeza que deseja excluir \"{name}\"?",
+    "deleteSuccess": "Contexto excluído com sucesso",
+    "deleteError": "Falha ao excluir contexto",
+    "scopes": {
+      "mine": "Meus",
+      "public": "Públicos",
+      "all": "Todos"
+    },
+    "visibility": {
+      "public": "Público",
+      "private": "Privado"
+    },
+    "table": {
+      "title": "Contextos cadastrados",
+      "descriptionMine": "Gerencie seus contextos e ajuste a visibilidade quando necessário.",
+      "descriptionReadOnly": "Visualização em modo leitura para contextos compartilhados.",
+      "name": "Nome",
+      "type": "Tipo",
+      "schemaFormat": "Formato",
+      "visibility": "Visibilidade",
+      "owner": "Owner"
+    },
+    "drawer": {
+      "newTitle": "Novo Database Context",
+      "editTitle": "Editar Database Context",
+      "newDescription": "Cadastre um contexto com schema para reaproveitamento em consultas e rotinas.",
+      "editDescription": "Atualize metadados, schema e visibilidade do contexto.",
+      "nameLabel": "Nome",
+      "namePlaceholder": "Ex: ERP Produção",
+      "descriptionLabel": "Descrição",
+      "descriptionPlaceholder": "Descreva este contexto e seu objetivo...",
+      "typeLabel": "Tipo de Banco",
+      "schemaFormatLabel": "Formato do Schema",
+      "schemaDefinitionLabel": "Definição do Schema",
+      "schemaDefinitionPlaceholder": "Cole aqui o schema em SQL, Prisma ou formato equivalente...",
+      "publicLabel": "Contexto público",
+      "publicDescription": "Permite uso em recursos públicos vinculados.",
+      "requiredFields": "Nome e definição do schema são obrigatórios",
+      "loading": "Carregando contexto...",
+      "createSuccess": "Contexto criado com sucesso",
+      "updateSuccess": "Contexto atualizado com sucesso",
+      "saveError": "Falha ao salvar contexto",
+      "loadError": "Falha ao carregar contexto"
+    }
+  },
+  "database": {
+    "context": {
+      "required_for_public": "Para publicar consultas ou rotinas vinculadas, este Database Context deve estar público.",
+      "must_be_public": "Este contexto precisa estar público para permitir recursos públicos vinculados."
+    }
+  },
   "tags": {
     "title": "Tags",
     "manageTags": "Gerenciar Tags",

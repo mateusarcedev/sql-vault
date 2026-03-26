@@ -3,6 +3,7 @@ import { analyzeWithOllama } from './providers/ollama'
 import { analyzeWithOpenAI } from './providers/openai'
 import { analyzeWithAnthropic } from './providers/anthropic'
 import { analyzeWithGemini } from './providers/gemini'
+import type { DatabaseContext } from '@prisma/client'
 
 type AnalyzeConfig = {
   provider: AIProvider
@@ -15,24 +16,25 @@ type AnalyzeConfig = {
 export async function analyzeSQL(
   sql: string,
   dialect: string,
-  config: AnalyzeConfig
+  config: AnalyzeConfig,
+  databaseContext?: DatabaseContext | null
 ): Promise<AIAnalysisResult> {
   try {
     switch (config.provider) {
       case 'ollama':
-        return await analyzeWithOllama(sql, dialect, config.model)
+        return await analyzeWithOllama(sql, dialect, config.model, databaseContext)
 
       case 'openai':
         if (!config.openaiApiKey) throw new Error('Chave da OpenAI não configurada')
-        return await analyzeWithOpenAI(sql, dialect, config.model, config.openaiApiKey)
+        return await analyzeWithOpenAI(sql, dialect, config.model, config.openaiApiKey, databaseContext)
 
       case 'anthropic':
         if (!config.anthropicApiKey) throw new Error('Chave da Anthropic não configurada')
-        return await analyzeWithAnthropic(sql, dialect, config.model, config.anthropicApiKey)
+        return await analyzeWithAnthropic(sql, dialect, config.model, config.anthropicApiKey, databaseContext)
 
       case 'gemini':
         if (!config.geminiApiKey) throw new Error('Chave do Gemini não configurada')
-        return await analyzeWithGemini(sql, dialect, config.model, config.geminiApiKey)
+        return await analyzeWithGemini(sql, dialect, config.model, config.geminiApiKey, databaseContext)
 
       default:
         throw new Error('Provedor de IA desconhecido')

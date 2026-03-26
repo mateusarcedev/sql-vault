@@ -48,7 +48,7 @@ export const PUT = async (req: any, { params }: any) => {
 
   const { id } = await params as { id: string }
   const body = await req.json()
-  const { title, description, sql, database, status, tagIds, isFavorite, restore } = body
+  const { title, description, sql, database, status, tagIds, isFavorite, restore, databaseId, isPublic } = body
 
   try {
     const existingQuery = await db.query.findUnique({
@@ -63,12 +63,46 @@ export const PUT = async (req: any, { params }: any) => {
       return NextResponse.json({ message: "Forbidden" }, { status: 403 })
     }
 
+    // Validar ownership de databaseId se fornecido
+    if (databaseId !== undefined && databaseId !== null) {
+      try {
+        const dbContext = await db.databaseContext.findUnique({
+          where: { id: databaseId },
+        })
+
+        if (!dbContext) {
+          return NextResponse.json({ message: "Database context not found" }, { status: 404 })
+        }
+
+        if (dbContext.userId !== userId) {
+          return NextResponse.json({ message: "Forbidden" }, { status: 403 })
+        }
+      } catch (error) {
+        console.error("[QUERY_PUT_VALIDATE_DB]", error)
+        return NextResponse.json({ message: "Internal Error" }, { status: 500 })
+      }
+    }
+
     const data: any = {
       title,
       description,
       database,
       status,
       isFavorite,
+    }
+
+    // Se databaseId for fornecido na requisição, incluir na atualização
+    if (databaseId !== undefined) {
+      data.databaseId = databaseId === null ? null : databaseId
+    }
+
+    // Se databaseId agora é null, forçar isPublic=false
+    const newDatabaseId = databaseId !== undefined ? databaseId : existingQuery.databaseId
+    if (isPublic !== undefined) {
+      data.isPublic = newDatabaseId === null ? false : isPublic
+    } else if (newDatabaseId === null && existingQuery.databaseId !== null) {
+      // Se databaseId está sendo setado para null, forçar isPublic=false
+      data.isPublic = false
     }
 
     if (restore) {

@@ -14,6 +14,7 @@ import { useState } from 'react'
 interface AIAnalysisPanelProps {
   sql: string
   dialect: string
+  databaseId?: string | null
   availableTags: Tag[]
   onApplySuggestions: (name: string, description: string, tagNames: string[]) => void
   hasAIConfigured: boolean
@@ -28,6 +29,7 @@ const severityConfig: Record<PerformanceSeverity, { icon: typeof Info; color: st
 export function AIAnalysisPanel({
   sql,
   dialect,
+  databaseId,
   availableTags,
   onApplySuggestions,
   hasAIConfigured,
@@ -68,7 +70,7 @@ export function AIAnalysisPanel({
           size="sm"
           className="gap-2"
           disabled={isAnalyzing || !sql.trim()}
-          onClick={() => analyze(sql, dialect)}
+          onClick={() => analyze(sql, dialect, databaseId)}
         >
           {isAnalyzing ? (
             <Loader2 className="h-4 w-4 animate-spin" />

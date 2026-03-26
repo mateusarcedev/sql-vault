@@ -21,15 +21,46 @@ export interface Query {
   description: string
   sql: string
   database: DatabaseType
-  userId: string
-  tags: Tag[]
-  versions: QueryVersion[]
-  status: 'active' | 'draft'
+  databaseId?: string | null
+  isPublic: boolean
   isFavorite: boolean
   copyCount: number
+  status: 'active' | 'draft'
+  userId: string
+  owner?: {
+    id: string
+    name: string | null
+  }
+  tags: Tag[]
+  versions: QueryVersion[]
   createdAt: string
   updatedAt: string
   deletedAt?: string
+}
+
+export interface QueryCreateInput {
+  title: string
+  description: string
+  sql: string
+  database: DatabaseType
+  databaseId?: string | null
+  isPublic?: boolean
+  isFavorite?: boolean
+  status?: 'active' | 'draft'
+  tagIds?: string[]
+}
+
+export interface QueryUpdateInput {
+  title?: string
+  description?: string
+  sql?: string
+  database?: DatabaseType
+  databaseId?: string | null
+  isPublic?: boolean
+  isFavorite?: boolean
+  status?: 'active' | 'draft'
+  tagIds?: string[]
+  restore?: boolean
 }
 
 export interface QueryFilters {
@@ -37,6 +68,13 @@ export interface QueryFilters {
   database?: DatabaseType
   tagIds?: string[]
   isFavorite?: boolean
+}
+
+export interface QueryPublic extends Query {
+  owner: {
+    id: string
+    name: string | null
+  }
 }
 
 export const DATABASE_COLORS: Record<DatabaseType, string> = {

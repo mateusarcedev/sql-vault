@@ -18,7 +18,7 @@ export function useAIAnalyze() {
   const [result, setResult] = useState<AIAnalysisResult | null>(null)
   const [error, setError] = useState<string | null>(null)
 
-  const analyze = async (sql: string, dialect: string) => {
+  const analyze = async (sql: string, dialect: string, databaseId?: string | null) => {
     if (!sql.trim()) {
       toast.error('Escreva o SQL antes de analisar')
       return
@@ -30,7 +30,7 @@ export function useAIAnalyze() {
       const res = await fetch('/api/ai/analyze', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ sql, dialect }),
+        body: JSON.stringify({ sql, dialect, databaseId: databaseId ?? undefined }),
       })
       if (!res.ok) {
         const data = await res.json()
