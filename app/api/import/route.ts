@@ -130,7 +130,7 @@ export async function POST(req: Request) {
           ? contextIdMap.get(q.databaseId) ?? null
           : null
 
-      const effectiveIsPublic = mappedDatabaseId ? Boolean(q.isPublic) : false
+      const effectiveIsPublic = Boolean(q.isPublic)
 
       if (existingQuery) {
         await db.query.update({
@@ -207,7 +207,7 @@ export async function POST(req: Request) {
             ? contextIdMap.get(r.databaseId) ?? null
             : null
 
-        const effectiveIsPublic = mappedDatabaseId ? Boolean(r.isPublic) : false
+        const effectiveIsPublic = Boolean(r.isPublic)
 
         if (existingRoutine) {
           await db.routine.update({

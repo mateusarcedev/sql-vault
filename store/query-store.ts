@@ -137,7 +137,7 @@ export const useQueryStore = create<QueryStore>((set, get) => ({
       const payload = {
         ...data,
         databaseId: data.databaseId ?? null,
-        isPublic: data.databaseId ? Boolean(data.isPublic) : false,
+        isPublic: Boolean(data.isPublic),
       }
 
       const response = await fetch('/api/queries', {
@@ -173,7 +173,7 @@ export const useQueryStore = create<QueryStore>((set, get) => ({
 
       const isPublic = databaseId
         ? (hasIsPublic ? Boolean(data.isPublic) : Boolean(existingQuery?.isPublic))
-        : false
+        : (hasIsPublic ? Boolean(data.isPublic) : Boolean(existingQuery?.isPublic))
 
       const payload = {
         ...data,

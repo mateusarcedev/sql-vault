@@ -148,11 +148,11 @@ export const DELETE = async (req: any, { params }: any) => {
     await (db as any).$transaction([
       (db as any).query.updateMany({
         where: { databaseId: id },
-        data: { databaseId: null, isPublic: false },
+        data: { databaseId: null },
       }),
       (db as any).routine.updateMany({
         where: { databaseId: id },
-        data: { databaseId: null, isPublic: false },
+        data: { databaseId: null },
       }),
       (db as any).databaseContext.delete({
         where: { id },

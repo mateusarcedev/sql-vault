@@ -96,13 +96,8 @@ export const PUT = async (req: any, { params }: any) => {
       data.databaseId = databaseId === null ? null : databaseId
     }
 
-    // Se databaseId agora é null, forçar isPublic=false
-    const newDatabaseId = databaseId !== undefined ? databaseId : existingQuery.databaseId
     if (isPublic !== undefined) {
-      data.isPublic = newDatabaseId === null ? false : isPublic
-    } else if (newDatabaseId === null && existingQuery.databaseId !== null) {
-      // Se databaseId está sendo setado para null, forçar isPublic=false
-      data.isPublic = false
+      data.isPublic = Boolean(isPublic)
     }
 
     if (restore) {

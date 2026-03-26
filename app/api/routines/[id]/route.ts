@@ -89,9 +89,11 @@ export const PUT: any = async (req: any, ctx: any) => {
     // Validar ownership de databaseId se fornecido
     if (databaseId !== undefined) {
       if (databaseId === null) {
-        // Setando para null, força isPublic=false
+        // Setando para null mantém possibilidade de recurso público
         updateData.databaseId = null
-        updateData.isPublic = false
+        if (isPublic !== undefined) {
+          updateData.isPublic = Boolean(isPublic)
+        }
       } else {
         // Validar que o context pertence ao usuário
         const context = await db.databaseContext.findUnique({
@@ -115,12 +117,7 @@ export const PUT: any = async (req: any, ctx: any) => {
       }
     } else if (isPublic !== undefined) {
       // Atualizando apenas isPublic sem alterar databaseId
-      if (existingRoutine.databaseId === null) {
-        // Se databaseId é null, forçar isPublic=false
-        updateData.isPublic = false
-      } else {
-        updateData.isPublic = isPublic
-      }
+      updateData.isPublic = Boolean(isPublic)
     }
 
     if (sql !== undefined && sql !== existingRoutine.sql) {

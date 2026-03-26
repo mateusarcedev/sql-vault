@@ -71,7 +71,7 @@ export function QueryDrawer({ open, onOpenChange, editQuery }: QueryDrawerProps)
   const selectedDatabaseContext = databaseId
     ? databaseContexts.find((context) => context.id === databaseId) ?? null
     : null
-  const canEnablePublic = Boolean(databaseId && selectedDatabaseContext?.isPublic)
+  const canEnablePublic = !databaseId || Boolean(selectedDatabaseContext?.isPublic)
 
   useEffect(() => {
     fetch('/api/ai/config')
@@ -92,7 +92,7 @@ export function QueryDrawer({ open, onOpenChange, editQuery }: QueryDrawerProps)
       setSqlCode(editQuery.sql)
       setDatabase(editQuery.database)
       setDatabaseId(editQuery.databaseId ?? null)
-      setIsPublic(Boolean(editQuery.databaseId) && Boolean(editQuery.isPublic))
+      setIsPublic(Boolean(editQuery.isPublic))
       setSelectedTags(editQuery.tags.map(t => t.id))
       setIsFavorite(editQuery.isFavorite)
       setStatus(editQuery.status)

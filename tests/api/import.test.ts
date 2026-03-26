@@ -192,7 +192,7 @@ describe('POST /api/import', () => {
     )
   })
 
-  it('version 3 faz fallback de databaseId para null quando mapping não existe', async () => {
+  it('version 3 faz fallback de databaseId para null quando mapping não existe e preserva isPublic', async () => {
     const payloadSemMap = {
       ...basePayloadV3,
       queries: [
@@ -221,7 +221,7 @@ describe('POST /api/import', () => {
       expect.objectContaining({
         data: expect.objectContaining({
           databaseId: null,
-          isPublic: false,
+          isPublic: true,
         }),
       })
     )
@@ -230,7 +230,7 @@ describe('POST /api/import', () => {
       expect.objectContaining({
         data: expect.objectContaining({
           databaseId: null,
-          isPublic: false,
+          isPublic: true,
         }),
       })
     )

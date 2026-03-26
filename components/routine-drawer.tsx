@@ -108,7 +108,7 @@ export function RoutineDrawer({ open, onOpenChange, editRoutine }: RoutineDrawer
   const selectedDatabaseContext = databaseId
     ? databaseContexts.find((context) => context.id === databaseId) ?? null
     : null
-  const canEnablePublic = Boolean(databaseId && selectedDatabaseContext?.isPublic)
+  const canEnablePublic = !databaseId || Boolean(selectedDatabaseContext?.isPublic)
 
   useEffect(() => {
     fetch('/api/ai/config')
@@ -129,7 +129,7 @@ export function RoutineDrawer({ open, onOpenChange, editRoutine }: RoutineDrawer
       setType(editRoutine.type)
       setDatabase(editRoutine.database)
       setDatabaseId(editRoutine.databaseId ?? null)
-      setIsPublic(Boolean(editRoutine.databaseId) && Boolean(editRoutine.isPublic))
+      setIsPublic(Boolean(editRoutine.isPublic))
       setSqlCode(editRoutine.sql)
       setParameters([...editRoutine.parameters])
       setReturnType(editRoutine.returnType || '')

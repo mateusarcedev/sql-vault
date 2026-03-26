@@ -20,5 +20,6 @@ node_modules/
 .next/
 .DS_Store
 /lib/generated/prisma
+.worktrees/
 
 sqlvault-vscode

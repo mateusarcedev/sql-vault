@@ -121,7 +121,7 @@ export const POST: any = async (req: any) => {
 
   try {
     // Validar ownership de databaseId se fornecido
-    let effectiveIsPublic = isPublic || false
+    let effectiveIsPublic = Boolean(isPublic)
     let effectiveDatabaseId = databaseId || null
 
     if (databaseId) {
@@ -138,11 +138,11 @@ export const POST: any = async (req: any) => {
         return NextResponse.json({ message: "Forbidden" }, { status: 403 })
       }
 
-      // Se databaseId é válido, permitir isPublic
-      effectiveIsPublic = isPublic || false
+      // Se databaseId é válido, manter isPublic solicitado
+      effectiveIsPublic = Boolean(isPublic)
     } else {
-      // Se databaseId é null, forçar isPublic=false
-      effectiveIsPublic = false
+      // Sem databaseId também pode ser público
+      effectiveIsPublic = Boolean(isPublic)
       effectiveDatabaseId = null
     }
 

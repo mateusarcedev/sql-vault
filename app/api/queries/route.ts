@@ -127,8 +127,7 @@ export const POST: any = async (req: any) => {
     }
   }
 
-  // Força isPublic=false se databaseId é null
-  const effectiveIsPublic = databaseId === null ? false : (isPublic ?? false)
+  const effectiveIsPublic = Boolean(isPublic)
 
   try {
     const query = await db.query.create({

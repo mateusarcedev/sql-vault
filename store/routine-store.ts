@@ -124,7 +124,7 @@ export const useRoutineStore = create<RoutineStore>((set, get) => ({
       const payload = {
         ...data,
         databaseId: data.databaseId ?? null,
-        isPublic: data.databaseId ? Boolean(data.isPublic) : false,
+        isPublic: Boolean(data.isPublic),
       }
 
       const response = await fetch('/api/routines', {
@@ -159,7 +159,7 @@ export const useRoutineStore = create<RoutineStore>((set, get) => ({
 
       const isPublic = databaseId
         ? (hasIsPublic ? Boolean(data.isPublic) : Boolean(existingRoutine?.isPublic))
-        : false
+        : (hasIsPublic ? Boolean(data.isPublic) : Boolean(existingRoutine?.isPublic))
 
       const payload = {
         ...data,
