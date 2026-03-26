@@ -39,6 +39,7 @@ SQL Vault is a local-first system for developers, data analysts, and engineering
   * Relations: `queries`, `routines`, `tags`, `apiKeys`
 * **Query**
   * Required: `id`, `name`, `sql`, `database`, `status`, `isFavorite`, `copyCount`, `userId`
+  * Visibility: `databaseId` (optional FK to `DatabaseContext`) and `isPublic`
   * Soft delete: `deletedAt`
   * Relations: many `tags`, many `versions`
 * **QueryVersion**
@@ -49,6 +50,7 @@ SQL Vault is a local-first system for developers, data analysts, and engineering
   * Shared metadata entity across Queries and Routines
 * **Routine**
   * Required: `id`, `name`, `sql`, `database`, `type`, `userId`
+  * Visibility: `databaseId` (optional FK to `DatabaseContext`) and `isPublic`
   * `parameters` is JSON serialized as string at persistence boundary
   * Soft delete: `deletedAt`
   * Relations: many `tags`, many `versions`
@@ -61,6 +63,10 @@ SQL Vault is a local-first system for developers, data analysts, and engineering
 * **UserAIConfig**
   * Required: `userId`, `provider`, `model`
   * Optional provider keys: `openaiApiKey`, `anthropicApiKey`, `geminiApiKey`
+* **DatabaseContext**
+  * Required: `id`, `name`, `type`, `schemaFormat`, `schemaDefinition`, `userId`
+  * Visibility: `isPublic`
+  * Relations: referenced by `Query` and `Routine` via `databaseId` (`onDelete: SetNull`)
 
 ## 5. Architectural Rules
 
@@ -70,6 +76,8 @@ SQL Vault is a local-first system for developers, data analysts, and engineering
 4. **Shared metadata**: `Tag` can relate to both `Query` and `Routine` using separate relations.
 5. **Token security**: Raw API key token is returned only once on `POST /api/keys`.
 6. **Automatic versioning**: On SQL change in `PUT` handlers, create version snapshot before update.
+7. **Effective public visibility**: A `Query`/`Routine` appears in public scope only when `isPublic=true` and, if `databaseId` is present, the linked `DatabaseContext.isPublic=true`.
+8. **DatabaseContext delete rule**: `DatabaseContext` can be hard-deleted, but linked `Query`/`Routine` rows must be unlinked first (`databaseId=null`) and forced to `isPublic=false` in a single atomic transaction.
 
 ## 6. Authentication
 
@@ -94,6 +102,7 @@ Single source for API key resolution: `lib/auth-api-key.ts` (`getUserFromApiKey`
 
 **Queries API**
 * `GET /api/queries`
+* `GET /api/queries?scope=public` (public listing with owner metadata + effective visibility rule)
 * `POST /api/queries`
 * `GET /api/queries/[id]`
 * `PUT /api/queries/[id]`
@@ -102,6 +111,7 @@ Single source for API key resolution: `lib/auth-api-key.ts` (`getUserFromApiKey`
 
 **Routines API**
 * `GET /api/routines`
+* `GET /api/routines?scope=public` (public listing with owner metadata + effective visibility rule)
 * `POST /api/routines`
 * `GET /api/routines/[id]`
 * `PUT /api/routines/[id]`
@@ -112,6 +122,13 @@ Single source for API key resolution: `lib/auth-api-key.ts` (`getUserFromApiKey`
 * `GET /api/tags`
 * `POST /api/tags`
 
+**Database Contexts API**
+* `GET /api/database-contexts?scope=mine|public|all`
+* `POST /api/database-contexts`
+* `GET /api/database-contexts/[id]`
+* `PUT /api/database-contexts/[id]`
+* `DELETE /api/database-contexts/[id]` (atomic unlink + delete)
+
 **Versions API**
 * `GET /api/queries/[id]/versions`
 * `POST /api/queries/[id]/versions/[versionId]/restore`
@@ -119,9 +136,9 @@ Single source for API key resolution: `lib/auth-api-key.ts` (`getUserFromApiKey`
 * `POST /api/routines/[id]/versions/[versionId]/restore`
 
 **Export/Import API**
-* `GET /api/export?format=json`
+* `GET /api/export?format=json&version=1|2|3`
 * `GET /api/export?format=sql`
-* `POST /api/import` (session-only)
+* `POST /api/import` (session-only, supports versions 1/2/3; v3 maps `DatabaseContext` ids and safely falls back to `databaseId=null` + `isPublic=false` when mapping is missing)
 
 **API Keys API** (session-only)
 * `GET /api/keys`
@@ -133,7 +150,7 @@ Single source for API key resolution: `lib/auth-api-key.ts` (`getUserFromApiKey`
 * `GET /api/ai/config`
 * `PUT /api/ai/config`
 * `GET /api/ai/models?provider=` (dynamic provider model listing with short-lived cache)
-* `POST /api/ai/analyze` (structured SQL analysis output)
+* `POST /api/ai/analyze` (structured SQL analysis output; accepts optional `databaseId` to inject schema context with safe truncation)
 
 ## 9. Frontend Patterns
 

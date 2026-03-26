@@ -1,7 +1,12 @@
 'use client'
 
 import { create } from 'zustand'
-import type { Routine, RoutineType } from '@/types/routine'
+import type {
+  Routine,
+  RoutineType,
+  RoutineCreateInput,
+  RoutineUpdateInput,
+} from '@/types/routine'
 import type { DatabaseType } from '@/types/query'
 
 interface RoutineFilters {
@@ -23,8 +28,8 @@ export interface RoutineStore {
   listTrashed: () => Routine[]
   getById: (id: string) => Routine | undefined
   initialize: () => Promise<void>
-  create: (data: Omit<Routine, 'id' | 'createdAt' | 'updatedAt' | 'copyCount' | 'versions' | 'tags'> & { tagIds: string[] }) => Promise<void>
-  update: (id: string, data: Partial<Routine> & { tagIds?: string[] }) => Promise<void>
+  create: (data: RoutineCreateInput) => Promise<void>
+  update: (id: string, data: RoutineUpdateInput) => Promise<void>
   remove: (id: string) => Promise<void>
   permanentDelete: (id: string) => Promise<void>
   restore: (id: string) => Promise<void>
@@ -116,10 +121,16 @@ export const useRoutineStore = create<RoutineStore>((set, get) => ({
   create: async (data) => {
     set({ isSubmitting: true })
     try {
+      const payload = {
+        ...data,
+        databaseId: data.databaseId ?? null,
+        isPublic: data.databaseId ? Boolean(data.isPublic) : false,
+      }
+
       const response = await fetch('/api/routines', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data),
+        body: JSON.stringify(payload),
       })
       
       if (!response.ok) throw new Error('Failed to create routine')
@@ -138,10 +149,28 @@ export const useRoutineStore = create<RoutineStore>((set, get) => ({
   update: async (id, data) => {
     set({ isSubmitting: true })
     try {
+      const existingRoutine = get().getById(id)
+      const hasDatabaseId = Object.prototype.hasOwnProperty.call(data, 'databaseId')
+      const hasIsPublic = Object.prototype.hasOwnProperty.call(data, 'isPublic')
+
+      const databaseId = hasDatabaseId
+        ? (data.databaseId ?? null)
+        : (existingRoutine?.databaseId ?? null)
+
+      const isPublic = databaseId
+        ? (hasIsPublic ? Boolean(data.isPublic) : Boolean(existingRoutine?.isPublic))
+        : false
+
+      const payload = {
+        ...data,
+        databaseId,
+        isPublic,
+      }
+
       const response = await fetch(`/api/routines/${id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data),
+        body: JSON.stringify(payload),
       })
       
       if (!response.ok) throw new Error('Failed to update routine')

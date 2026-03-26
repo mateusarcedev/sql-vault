@@ -298,6 +298,70 @@
       "importError": "Error importing data"
     }
   },
+  "databaseContexts": {
+    "pageTitle": "Database Contexts",
+    "sectionTitle": "Database Contexts",
+    "sectionDescription": "Manage database contexts to share schema and safely enable public resources.",
+    "settingsDescription": "Quickly manage your contexts and open the complete area for scope-based browsing.",
+    "settingsCardTitle": "Your Contexts",
+    "settingsCardDescription": "Quick list of your most recent database contexts.",
+    "newContext": "New Context",
+    "openFullPage": "Open full page",
+    "loading": "Loading contexts...",
+    "empty": "No database context created yet.",
+    "ownerFallback": "Unnamed",
+    "deleteTitle": "Delete Database Context?",
+    "deleteDescription": "Are you sure you want to delete \"{name}\"?",
+    "deleteSuccess": "Context deleted successfully",
+    "deleteError": "Failed to delete context",
+    "scopes": {
+      "mine": "Mine",
+      "public": "Public",
+      "all": "All"
+    },
+    "visibility": {
+      "public": "Public",
+      "private": "Private"
+    },
+    "table": {
+      "title": "Registered contexts",
+      "descriptionMine": "Manage your contexts and adjust visibility when needed.",
+      "descriptionReadOnly": "Read-only listing for shared contexts.",
+      "name": "Name",
+      "type": "Type",
+      "schemaFormat": "Format",
+      "visibility": "Visibility",
+      "owner": "Owner"
+    },
+    "drawer": {
+      "newTitle": "New Database Context",
+      "editTitle": "Edit Database Context",
+      "newDescription": "Create a context with schema for reuse in queries and routines.",
+      "editDescription": "Update metadata, schema, and visibility for this context.",
+      "nameLabel": "Name",
+      "namePlaceholder": "e.g. Production ERP",
+      "descriptionLabel": "Description",
+      "descriptionPlaceholder": "Describe this context and its purpose...",
+      "typeLabel": "Database Type",
+      "schemaFormatLabel": "Schema Format",
+      "schemaDefinitionLabel": "Schema Definition",
+      "schemaDefinitionPlaceholder": "Paste the schema here in SQL, Prisma, or equivalent format...",
+      "publicLabel": "Public context",
+      "publicDescription": "Allows usage in linked public resources.",
+      "requiredFields": "Name and schema definition are required",
+      "loading": "Loading context...",
+      "createSuccess": "Context created successfully",
+      "updateSuccess": "Context updated successfully",
+      "saveError": "Failed to save context",
+      "loadError": "Failed to load context"
+    }
+  },
+  "database": {
+    "context": {
+      "required_for_public": "To publish linked queries or routines, this Database Context must be public.",
+      "must_be_public": "This context must be public to allow linked public resources."
+    }
+  },
   "tags": {
     "title": "Tags",
     "manageTags": "Manage Tags",

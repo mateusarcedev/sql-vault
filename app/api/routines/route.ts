@@ -17,10 +17,16 @@ export const GET: any = async (req: any) => {
   const database = url.searchParams.get("database")
   const tagsParam = url.searchParams.get("tags")
   const sortBy = url.searchParams.get("sortBy") as 'createdAt' | 'name' | 'copyCount' | null
+  const scope = url.searchParams.get("scope") as 'mine' | 'public' | null
 
-  const whereCondition: any = { 
-    userId,
-    deletedAt: null 
+  let whereCondition: any = { deletedAt: null }
+
+  if (scope === 'public') {
+    // Apenas routines públicas (isPublic=true)
+    whereCondition.isPublic = true
+  } else {
+    // Escopo padrão: routines do usuário autenticado (scope=mine)
+    whereCondition.userId = userId
   }
 
   if (search) {
@@ -52,14 +58,44 @@ export const GET: any = async (req: any) => {
       where: whereCondition,
       include: {
         tags: true,
+        user: scope === 'public',
+        databaseContext: scope === 'public',
       },
       orderBy,
     })
 
-    const parsedRoutines = routines.map(routine => ({
-      ...routine,
-      parameters: routine.parameters ? JSON.parse(routine.parameters) : []
-    }))
+    // Filtra routines com contexto privado na listagem pública
+    let filteredRoutines = routines
+    if (scope === 'public') {
+      filteredRoutines = routines.filter(routine => {
+        if (routine.databaseId && routine.databaseContext) {
+          return routine.databaseContext.isPublic === true
+        }
+        // Se não tem databaseId, mantém (databaseId=null com isPublic=true é válido)
+        return true
+      })
+    }
+
+    const parsedRoutines = filteredRoutines.map(routine => {
+      const parsed: any = {
+        ...routine,
+        parameters: routine.parameters ? JSON.parse(routine.parameters) : []
+      }
+
+      // Inclui owner metadata em listagem pública
+      if (scope === 'public' && routine.user) {
+        parsed.owner = {
+          id: routine.user.id,
+          name: routine.user.name,
+        }
+        delete parsed.user
+      }
+
+      // Remove databaseContext do response
+      delete (parsed as any).databaseContext
+
+      return parsed
+    })
 
     return NextResponse.json(parsedRoutines)
   } catch (error) {
@@ -77,13 +113,39 @@ export const POST: any = async (req: any) => {
   }
 
   const body = await req.json()
-  const { name, description, type, database, sql, parameters, returnType, status, tagIds } = body
+  const { name, description, type, database, sql, parameters, returnType, status, tagIds, databaseId, isPublic } = body
 
   if (!name || !sql || !type || !database) {
     return NextResponse.json({ message: "Name, type, database and SQL are required" }, { status: 400 })
   }
 
   try {
+    // Validar ownership de databaseId se fornecido
+    let effectiveIsPublic = isPublic || false
+    let effectiveDatabaseId = databaseId || null
+
+    if (databaseId) {
+      const context = await db.databaseContext.findUnique({
+        where: { id: databaseId },
+        select: { userId: true },
+      })
+
+      if (!context) {
+        return NextResponse.json({ message: "Database context not found" }, { status: 404 })
+      }
+
+      if (context.userId !== userId) {
+        return NextResponse.json({ message: "Forbidden" }, { status: 403 })
+      }
+
+      // Se databaseId é válido, permitir isPublic
+      effectiveIsPublic = isPublic || false
+    } else {
+      // Se databaseId é null, forçar isPublic=false
+      effectiveIsPublic = false
+      effectiveDatabaseId = null
+    }
+
     const routine = await db.routine.create({
       data: {
         name,
@@ -91,6 +153,8 @@ export const POST: any = async (req: any) => {
         type,
         database,
         sql,
+        databaseId: effectiveDatabaseId,
+        isPublic: effectiveIsPublic,
         parameters: parameters ? JSON.stringify(parameters) : '[]',
         returnType: type === 'function' ? returnType : null,
         status: status || 'active',
@@ -115,7 +179,7 @@ export const POST: any = async (req: any) => {
       parameters: routine.parameters ? JSON.parse(routine.parameters) : []
     }
 
-    return NextResponse.json(parsedRoutine)
+    return NextResponse.json(parsedRoutine, { status: 200 })
   } catch (error) {
     console.error("[ROUTINES_POST]", error)
     return NextResponse.json({ message: "Internal Error" }, { status: 500 })

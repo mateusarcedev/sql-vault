@@ -2,6 +2,14 @@ import { auth } from "@/auth"
 import db from "@/lib/db"
 import { NextResponse } from "next/server"
 
+const IMPORT_VERSION_MAP = {
+  1: "legacy",
+  2: "v1 + routines",
+  3: "v2 + databaseContexts + databaseId + isPublic",
+} as const
+
+const SUPPORTED_IMPORT_VERSIONS = new Set<number>([1, 2, 3])
+
 export async function POST(req: Request) {
   try {
     const session = await auth()
@@ -14,11 +22,11 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Inválido payload JSON" }, { status: 400 })
     }
 
-    if (body.version !== 1 && body.version !== 2) {
+    if (!SUPPORTED_IMPORT_VERSIONS.has(body.version)) {
       return NextResponse.json({ error: "Formato de exportação não suportado." }, { status: 400 })
     }
 
-    const { queries, tags, routines } = body
+    const { queries, tags, routines, databaseContexts } = body
     if (!Array.isArray(queries) || !Array.isArray(tags)) {
       return NextResponse.json({ error: "Payload malformado." }, { status: 400 })
     }
@@ -31,11 +39,16 @@ export async function POST(req: Request) {
     // Reconstruir Tags por nome
     const tagIdMap = new Map<string, string>()
 
+    // Em v3, manter mapeamento oldContextId -> newContextId
+    const contextIdMap = new Map<string, string>()
+
+    const userId = session.user.id
+
     for (const t of tags) {
       if (!t.name) continue
 
       let existingTag = await db.tag.findUnique({
-        where: { name_userId: { name: t.name, userId: session.user.id } },
+        where: { name_userId: { name: t.name, userId } },
       })
 
       if (!existingTag) {
@@ -43,11 +56,47 @@ export async function POST(req: Request) {
           data: {
             name: t.name,
             color: t.color || "#3B82F6",
-            userId: session.user.id,
+            userId,
           },
         })
       }
       tagIdMap.set(t.name, existingTag.id)
+    }
+
+    if (body.version === 3) {
+      const contextsToImport = Array.isArray(databaseContexts) ? databaseContexts : []
+
+      for (const context of contextsToImport) {
+        if (!context?.id || !context.name || !context.type || !context.schemaFormat || !context.schemaDefinition) {
+          continue
+        }
+
+        const existingContext = await db.databaseContext.findFirst({
+          where: {
+            userId,
+            name: context.name,
+          },
+        })
+
+        if (existingContext) {
+          contextIdMap.set(context.id, existingContext.id)
+          continue
+        }
+
+        const createdContext = await db.databaseContext.create({
+          data: {
+            name: context.name,
+            description: context.description || null,
+            type: context.type,
+            schemaFormat: context.schemaFormat,
+            schemaDefinition: context.schemaDefinition,
+            isPublic: context.isPublic || false,
+            userId,
+          },
+        })
+
+        contextIdMap.set(context.id, createdContext.id)
+      }
     }
 
     // Processar queries
@@ -73,8 +122,15 @@ export async function POST(req: Request) {
 
       // Upsert por nome e userId
       const existingQuery = await db.query.findFirst({
-        where: { title: q.name, userId: session.user.id, deletedAt: null },
+        where: { title: q.name, userId, deletedAt: null },
       })
+
+      const mappedDatabaseId =
+        body.version === 3 && q.databaseId
+          ? contextIdMap.get(q.databaseId) ?? null
+          : null
+
+      const effectiveIsPublic = mappedDatabaseId ? Boolean(q.isPublic) : false
 
       if (existingQuery) {
         await db.query.update({
@@ -87,6 +143,8 @@ export async function POST(req: Request) {
             status: q.status || "active",
             isFavorite: q.isFavorite || false,
             copyCount: q.copyCount || 0,
+            databaseId: mappedDatabaseId,
+            isPublic: effectiveIsPublic,
             tags: { set: currentTagsConnect },
           },
         })
@@ -102,7 +160,9 @@ export async function POST(req: Request) {
             status: q.status || "active",
             isFavorite: q.isFavorite || false,
             copyCount: q.copyCount || 0,
-            userId: session.user.id,
+            databaseId: mappedDatabaseId,
+            isPublic: effectiveIsPublic,
+            userId,
             tags: { connect: currentTagsConnect },
             versions: {
               create: {
@@ -116,8 +176,8 @@ export async function POST(req: Request) {
       }
     }
 
-    // Process routines if version 2
-    if (body.version === 2 && Array.isArray(routines)) {
+    // Process routines if version 2 or 3
+    if (body.version >= 2 && Array.isArray(routines)) {
       for (const r of routines) {
         if (r.deletedAt) {
           routinesSkipped++
@@ -139,8 +199,15 @@ export async function POST(req: Request) {
             .filter(Boolean) || []
 
         const existingRoutine = await db.routine.findFirst({
-          where: { name: r.name, userId: session.user.id, deletedAt: null },
+          where: { name: r.name, userId, deletedAt: null },
         })
+
+        const mappedDatabaseId =
+          body.version === 3 && r.databaseId
+            ? contextIdMap.get(r.databaseId) ?? null
+            : null
+
+        const effectiveIsPublic = mappedDatabaseId ? Boolean(r.isPublic) : false
 
         if (existingRoutine) {
           await db.routine.update({
@@ -151,6 +218,8 @@ export async function POST(req: Request) {
               database: r.database,
               type: r.type,
               status: r.status || "active",
+              databaseId: mappedDatabaseId,
+              isPublic: effectiveIsPublic,
               parameters: r.parameters ? JSON.stringify(r.parameters) : null,
               returnType: r.returnType || null,
               tags: { set: currentTagsConnect },
@@ -166,9 +235,11 @@ export async function POST(req: Request) {
               database: r.database,
               type: r.type,
               status: r.status || "active",
+              databaseId: mappedDatabaseId,
+              isPublic: effectiveIsPublic,
               parameters: r.parameters ? JSON.stringify(r.parameters) : null,
               returnType: r.returnType || null,
-              userId: session.user.id,
+              userId,
               tags: { connect: currentTagsConnect },
               versions: {
                 create: {
@@ -182,7 +253,14 @@ export async function POST(req: Request) {
       }
     }
 
-    return NextResponse.json({ queriesImported, queriesSkipped, routinesImported, routinesSkipped })
+    return NextResponse.json({
+      versionImported: body.version,
+      versionMap: IMPORT_VERSION_MAP,
+      queriesImported,
+      queriesSkipped,
+      routinesImported,
+      routinesSkipped,
+    })
   } catch (error) {
     console.error("Import error:", error)
     return NextResponse.json({ error: "Internal Server Error" }, { status: 500 })

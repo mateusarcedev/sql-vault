@@ -1,13 +1,15 @@
 import { AIAnalysisResult } from '@/types/ai'
 import { buildPrompt } from '../prompt'
+import type { DatabaseContext } from '@prisma/client'
 
 export async function analyzeWithGemini(
   sql: string,
   dialect: string,
   model: string,
-  apiKey: string
+  apiKey: string,
+  databaseContext?: DatabaseContext | null
 ): Promise<AIAnalysisResult> {
-  const { system, user } = buildPrompt(sql, dialect)
+  const { system, user } = buildPrompt(sql, dialect, databaseContext)
   const fullPrompt = `${system}\n\n${user}`
 
   const response = await fetch(

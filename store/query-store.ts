@@ -1,7 +1,15 @@
 'use client'
 
 import { create } from 'zustand'
-import type { Query, Tag, QueryFilters, QueryVersion, DatabaseType } from '@/types/query'
+import type {
+  Query,
+  Tag,
+  QueryFilters,
+  QueryVersion,
+  DatabaseType,
+  QueryCreateInput,
+  QueryUpdateInput,
+} from '@/types/query'
 
 interface QueryStore {
   // Data
@@ -20,8 +28,8 @@ interface QueryStore {
   listQueries: (filters?: QueryFilters) => Query[]
   listTrashed: () => Query[]
   getQuery: (id: string) => Query | undefined
-  createQuery: (data: Omit<Query, 'id' | 'versions' | 'copyCount' | 'createdAt' | 'updatedAt' | 'userId' | 'tags'> & { tagIds?: string[] }) => Promise<Query>
-  updateQuery: (id: string, data: Partial<Query> & { tagIds?: string[], restore?: boolean }) => Promise<Query>
+  createQuery: (data: QueryCreateInput) => Promise<Query>
+  updateQuery: (id: string, data: QueryUpdateInput) => Promise<Query>
   deleteQuery: (id: string) => Promise<void>
   restoreQuery: (id: string) => Promise<void>
   permanentDeleteQuery: (id: string) => Promise<void>
@@ -126,10 +134,16 @@ export const useQueryStore = create<QueryStore>((set, get) => ({
   createQuery: async (data) => {
     set({ isSubmitting: true })
     try {
+      const payload = {
+        ...data,
+        databaseId: data.databaseId ?? null,
+        isPublic: data.databaseId ? Boolean(data.isPublic) : false,
+      }
+
       const response = await fetch('/api/queries', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data),
+        body: JSON.stringify(payload),
       })
       
       if (!response.ok) throw new Error('Failed to create query')
@@ -149,10 +163,28 @@ export const useQueryStore = create<QueryStore>((set, get) => ({
   updateQuery: async (id, data) => {
     set({ isSubmitting: true })
     try {
+      const existingQuery = get().getQuery(id)
+      const hasDatabaseId = Object.prototype.hasOwnProperty.call(data, 'databaseId')
+      const hasIsPublic = Object.prototype.hasOwnProperty.call(data, 'isPublic')
+
+      const databaseId = hasDatabaseId
+        ? (data.databaseId ?? null)
+        : (existingQuery?.databaseId ?? null)
+
+      const isPublic = databaseId
+        ? (hasIsPublic ? Boolean(data.isPublic) : Boolean(existingQuery?.isPublic))
+        : false
+
+      const payload = {
+        ...data,
+        databaseId,
+        isPublic,
+      }
+
       const response = await fetch(`/api/queries/${id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data),
+        body: JSON.stringify(payload),
       })
       
       if (!response.ok) throw new Error('Failed to update query')

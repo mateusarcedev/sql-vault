@@ -3,13 +3,16 @@
 import { useState, useRef, useEffect } from 'react'
 import { useTranslations } from 'next-intl'
 import { useDateFnsLocale } from '@/hooks/use-date-fns-locale'
-import { Download, Upload, FileJson, AlertCircle, CheckCircle2, Key, Plus, Trash2, Copy, Check, Info, BrainCircuit, Eye, EyeOff, Loader2, RefreshCcw, ChevronsUpDown } from 'lucide-react'
+import { Download, Upload, FileJson, AlertCircle, CheckCircle2, Key, Plus, Trash2, Copy, Check, Info, BrainCircuit, Eye, EyeOff, Loader2, RefreshCcw, ChevronsUpDown, Database } from 'lucide-react'
 import { toast } from 'sonner'
 import { format } from 'date-fns'
+import { Link } from '@/i18n/navigation'
 import { AppHeader } from '@/components/app-header'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
+import { DatabaseContextDrawer } from '@/components/database-context-drawer'
 import { useQueryStore } from '@/store/query-store'
+import { useDatabaseContextStore } from '@/store/database-context-store'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import {
   Table,
@@ -69,6 +72,7 @@ export default function SettingsPage() {
   const tKeys = useTranslations('settings.apiKeys')
   const tAI = useTranslations('settings.ai')
   const tData = useTranslations('settings.data')
+  const tDb = useTranslations('databaseContexts')
   const tSettings = useTranslations('settings')
   const tCommon = useTranslations('common')
   const locale = useDateFnsLocale()
@@ -86,6 +90,8 @@ export default function SettingsPage() {
   const [isCopied, setIsCopied] = useState(false)
   const [regeneratingKeyId, setRegeneratingKeyId] = useState<string | null>(null)
   const [modelsRefreshKey, setModelsRefreshKey] = useState(0)
+  const [dbDrawerOpen, setDbDrawerOpen] = useState(false)
+  const [editingDbContextId, setEditingDbContextId] = useState<string | null>(null)
 
   const [aiProvider, setAiProvider] = useState<AIProvider | ''>('')
   const [aiModel, setAiModel] = useState('')
@@ -98,6 +104,12 @@ export default function SettingsPage() {
   const [modelComboboxOpen, setModelComboboxOpen] = useState(false)
 
   const { initialize } = useQueryStore()
+  const {
+    initialize: initializeDatabaseContexts,
+    listContexts,
+    deleteContext,
+    isLoading: isLoadingDatabaseContexts,
+  } = useDatabaseContextStore()
 
   const { data: aiConfig, isLoading: isLoadingAIConfig } = useQuery<AIConfigResponse>({
     queryKey: ['ai-config'],
@@ -125,6 +137,10 @@ export default function SettingsPage() {
       setAiModel(aiConfig.model ?? '')
     }
   }, [aiConfig])
+
+  useEffect(() => {
+    initializeDatabaseContexts('mine')
+  }, [initializeDatabaseContexts])
 
   const handleProviderChange = (value: AIProvider) => {
     setAiProvider(value)
@@ -346,6 +362,27 @@ export default function SettingsPage() {
     }
   }
 
+  const databaseContexts = listContexts().slice(0, 5)
+
+  const handleCreateDatabaseContext = () => {
+    setEditingDbContextId(null)
+    setDbDrawerOpen(true)
+  }
+
+  const handleEditDatabaseContext = (id: string) => {
+    setEditingDbContextId(id)
+    setDbDrawerOpen(true)
+  }
+
+  const handleDeleteDatabaseContext = async (id: string) => {
+    try {
+      await deleteContext(id)
+      toast.success(tDb('deleteSuccess'))
+    } catch {
+      toast.error(tDb('deleteError'))
+    }
+  }
+
   return (
     <>
       <AppHeader title={tSettings('title')} showSearch={false} />
@@ -361,6 +398,9 @@ export default function SettingsPage() {
               </TabsTrigger>
               <TabsTrigger value="data" className="h-9 px-4 text-sm font-medium data-[state=active]:font-semibold">
                 {tData('sectionTitle')}
+              </TabsTrigger>
+              <TabsTrigger value="database-contexts" className="h-9 px-4 text-sm font-medium data-[state=active]:font-semibold">
+                {tDb('sectionTitle')}
               </TabsTrigger>
             </TabsList>
 
@@ -798,6 +838,103 @@ export default function SettingsPage() {
                 </Card>
               </div>
             </TabsContent>
+
+            <TabsContent value="database-contexts" className="space-y-6">
+              <div className="space-y-1">
+                <h2 className="text-2xl font-bold tracking-tight">{tDb('sectionTitle')}</h2>
+                <p className="text-muted-foreground">{tDb('settingsDescription')}</p>
+              </div>
+
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
+                  <div className="space-y-1">
+                    <CardTitle className="text-lg font-semibold">{tDb('settingsCardTitle')}</CardTitle>
+                    <CardDescription>
+                      {tDb('settingsCardDescription')}
+                    </CardDescription>
+                  </div>
+                  <Button onClick={handleCreateDatabaseContext} className="gap-2">
+                    <Plus className="h-4 w-4" />
+                    {tDb('newContext')}
+                  </Button>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {isLoadingDatabaseContexts ? (
+                    <div className="py-8 text-center text-muted-foreground">{tDb('loading')}</div>
+                  ) : databaseContexts.length > 0 ? (
+                    <div className="rounded-md border">
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>{tDb('table.name')}</TableHead>
+                            <TableHead>{tDb('table.type')}</TableHead>
+                            <TableHead>{tDb('table.visibility')}</TableHead>
+                            <TableHead className="w-32"></TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {databaseContexts.map((context) => (
+                            <TableRow key={context.id}>
+                              <TableCell className="font-medium">{context.name}</TableCell>
+                              <TableCell>{context.type}</TableCell>
+                              <TableCell>
+                                {context.isPublic ? tDb('visibility.public') : tDb('visibility.private')}
+                              </TableCell>
+                              <TableCell>
+                                <div className="flex items-center justify-end gap-1">
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => handleEditDatabaseContext(context.id)}
+                                  >
+                                    {tCommon('edit')}
+                                  </Button>
+                                  <AlertDialog>
+                                    <AlertDialogTrigger asChild>
+                                      <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10">
+                                        <Trash2 className="h-4 w-4" />
+                                      </Button>
+                                    </AlertDialogTrigger>
+                                    <AlertDialogContent>
+                                      <AlertDialogHeader>
+                                        <AlertDialogTitle>{tDb('deleteTitle')}</AlertDialogTitle>
+                                        <AlertDialogDescription>
+                                          {tDb('deleteDescription', { name: context.name })}
+                                        </AlertDialogDescription>
+                                      </AlertDialogHeader>
+                                      <AlertDialogFooter>
+                                        <AlertDialogCancel>{tCommon('cancel')}</AlertDialogCancel>
+                                        <AlertDialogAction
+                                          className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                          onClick={() => handleDeleteDatabaseContext(context.id)}
+                                        >
+                                          {tCommon('delete')}
+                                        </AlertDialogAction>
+                                      </AlertDialogFooter>
+                                    </AlertDialogContent>
+                                  </AlertDialog>
+                                </div>
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </div>
+                  ) : (
+                    <div className="py-12 border-2 border-dashed rounded-lg flex flex-col items-center justify-center text-muted-foreground">
+                      <Database className="h-8 w-8 mb-2 opacity-20" />
+                      <p>{tDb('empty')}</p>
+                    </div>
+                  )}
+
+                  <div className="flex justify-end">
+                    <Button variant="outline" asChild>
+                      <Link href="/databases">{tDb('openFullPage')}</Link>
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
           </Tabs>
 
         </div>
@@ -887,6 +1024,13 @@ export default function SettingsPage() {
             </DialogFooter>
           </DialogContent>
         </Dialog>
+
+        <DatabaseContextDrawer
+          open={dbDrawerOpen}
+          onOpenChange={setDbDrawerOpen}
+          contextId={editingDbContextId}
+          onSaved={() => initializeDatabaseContexts('mine')}
+        />
       </main>
     </>
   )

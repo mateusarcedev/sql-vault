@@ -28,7 +28,10 @@ import { Checkbox } from '@/components/ui/checkbox'
 import { Switch } from '@/components/ui/switch'
 import { TagChip } from '@/components/tag-chip'
 import { useQueryStore } from '@/store/query-store'
+import { useDatabaseContextStore } from '@/store/database-context-store'
 import { DATABASE_LABELS, type DatabaseType, type Query } from '@/types/query'
+
+const NO_DATABASE_CONTEXT = '__none__'
 
 interface QueryDrawerProps {
   open: boolean
@@ -39,14 +42,23 @@ interface QueryDrawerProps {
 export function QueryDrawer({ open, onOpenChange, editQuery }: QueryDrawerProps) {
   const t = useTranslations('queryDrawer')
   const tCommon = useTranslations('common')
+  const tDatabaseContexts = useTranslations('databaseContexts')
+  const tDatabaseHints = useTranslations('database.context')
   const router = useRouter()
   const searchParams = useSearchParams()
   const { createQuery, updateQuery, addVersion, tags, isSubmitting } = useQueryStore()
+  const {
+    initialize: initializeDatabaseContexts,
+    listContexts,
+    isLoading: isLoadingDatabaseContexts,
+  } = useDatabaseContextStore()
 
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
   const [sqlCode, setSqlCode] = useState('')
   const [database, setDatabase] = useState<DatabaseType>('postgresql')
+  const [databaseId, setDatabaseId] = useState<string | null>(null)
+  const [isPublic, setIsPublic] = useState(false)
   const [selectedTags, setSelectedTags] = useState<string[]>([])
   const [isFavorite, setIsFavorite] = useState(false)
   const [status, setStatus] = useState<'active' | 'draft'>('active')
@@ -55,6 +67,11 @@ export function QueryDrawer({ open, onOpenChange, editQuery }: QueryDrawerProps)
   const [hasAIConfigured, setHasAIConfigured] = useState(false)
 
   const isEditing = !!editQuery
+  const databaseContexts = listContexts()
+  const selectedDatabaseContext = databaseId
+    ? databaseContexts.find((context) => context.id === databaseId) ?? null
+    : null
+  const canEnablePublic = Boolean(databaseId && selectedDatabaseContext?.isPublic)
 
   useEffect(() => {
     fetch('/api/ai/config')
@@ -64,11 +81,18 @@ export function QueryDrawer({ open, onOpenChange, editQuery }: QueryDrawerProps)
   }, [])
 
   useEffect(() => {
+    if (!open) return
+    void initializeDatabaseContexts('mine')
+  }, [open, initializeDatabaseContexts])
+
+  useEffect(() => {
     if (editQuery) {
       setTitle(editQuery.title)
       setDescription(editQuery.description)
       setSqlCode(editQuery.sql)
       setDatabase(editQuery.database)
+      setDatabaseId(editQuery.databaseId ?? null)
+      setIsPublic(Boolean(editQuery.databaseId) && Boolean(editQuery.isPublic))
       setSelectedTags(editQuery.tags.map(t => t.id))
       setIsFavorite(editQuery.isFavorite)
       setStatus(editQuery.status)
@@ -79,6 +103,8 @@ export function QueryDrawer({ open, onOpenChange, editQuery }: QueryDrawerProps)
       setDescription('')
       setSqlCode('')
       setDatabase('postgresql')
+      setDatabaseId(null)
+      setIsPublic(false)
       setSelectedTags([])
       setIsFavorite(false)
       setStatus('active')
@@ -86,6 +112,11 @@ export function QueryDrawer({ open, onOpenChange, editQuery }: QueryDrawerProps)
       setVersionDescription('')
     }
   }, [editQuery, open])
+
+  useEffect(() => {
+    if (canEnablePublic) return
+    setIsPublic(false)
+  }, [canEnablePublic])
 
   const handleFormatSQL = useCallback(() => {
     try {
@@ -129,6 +160,8 @@ export function QueryDrawer({ open, onOpenChange, editQuery }: QueryDrawerProps)
             description,
             sql: sqlCode,
             database,
+            databaseId,
+            isPublic,
             tagIds: selectedTags,
             isFavorite,
             status,
@@ -141,6 +174,8 @@ export function QueryDrawer({ open, onOpenChange, editQuery }: QueryDrawerProps)
           description,
           sql: sqlCode,
           database,
+          databaseId,
+          isPublic,
           tagIds: selectedTags,
           isFavorite,
           status,
@@ -239,6 +274,51 @@ export function QueryDrawer({ open, onOpenChange, editQuery }: QueryDrawerProps)
           </div>
 
           <div className="space-y-2">
+            <Label htmlFor="database-context">{tDatabaseContexts('sectionTitle')}</Label>
+            <Select
+              value={databaseId ?? NO_DATABASE_CONTEXT}
+              onValueChange={(value) => setDatabaseId(value === NO_DATABASE_CONTEXT ? null : value)}
+              disabled={isLoadingDatabaseContexts}
+            >
+              <SelectTrigger id="database-context" className="w-full">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value={NO_DATABASE_CONTEXT}>{tDatabaseContexts('empty')}</SelectItem>
+                {databaseContexts.map((context) => (
+                  <SelectItem key={context.id} value={context.id}>
+                    {context.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="rounded-lg border p-4 space-y-2">
+            <div className="flex items-center justify-between">
+              <div className="space-y-1">
+                <Label htmlFor="query-public" className="text-sm font-medium">
+                  {tDatabaseContexts('visibility.public')}
+                </Label>
+                <p className="text-xs text-muted-foreground">
+                  {tDatabaseHints('required_for_public')}
+                </p>
+              </div>
+              <Switch
+                id="query-public"
+                checked={isPublic}
+                onCheckedChange={setIsPublic}
+                disabled={!canEnablePublic}
+              />
+            </div>
+            {databaseId && !selectedDatabaseContext?.isPublic && (
+              <p className="text-xs text-amber-600 dark:text-amber-400">
+                {tDatabaseHints('must_be_public')}
+              </p>
+            )}
+          </div>
+
+          <div className="space-y-2">
             <div className="flex items-center justify-between">
               <Label>{t('sqlLabel')}</Label>
               <Button
@@ -274,6 +354,7 @@ export function QueryDrawer({ open, onOpenChange, editQuery }: QueryDrawerProps)
           <AIAnalysisPanel
             sql={sqlCode}
             dialect={database}
+            databaseId={databaseId}
             availableTags={tags}
             onApplySuggestions={handleApplySuggestions}
             hasAIConfigured={hasAIConfigured}

@@ -7,19 +7,20 @@ datasource db {
 }
 
 model User {
-  id            String        @id @default(cuid())
-  name          String?
-  email         String?       @unique
-  emailVerified DateTime?
-  image         String?
-  password      String?
-  createdAt     DateTime      @default(now())
-  updatedAt     DateTime      @updatedAt
-  queries       Query[]
-  tags          Tag[]
-  routines      Routine[]
-  apiKeys       ApiKey[]
-  aiConfig      UserAIConfig?
+  id               String            @id @default(cuid())
+  name             String?
+  email            String?           @unique
+  emailVerified    DateTime?
+  image            String?
+  password         String?
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+  queries          Query[]
+  tags             Tag[]
+  routines         Routine[]
+  apiKeys          ApiKey[]
+  aiConfig         UserAIConfig?
+  databaseContexts DatabaseContext[]
 }
 
 model UserAIConfig {
@@ -47,21 +48,27 @@ model ApiKey {
 }
 
 model Query {
-  id          String         @id @default(cuid())
-  title       String
-  description String?
-  sql         String
-  database    String         @default("postgresql")
-  isFavorite  Boolean        @default(false)
-  copyCount   Int            @default(0)
-  status      String         @default("active")
-  userId      String
-  user        User           @relation(fields: [userId], references: [id], onDelete: Cascade)
-  tags        Tag[]          @relation("QueryToTag")
-  versions    QueryVersion[]
-  createdAt   DateTime       @default(now())
-  updatedAt   DateTime       @updatedAt
-  deletedAt   DateTime?
+  id              String           @id @default(cuid())
+  title           String
+  description     String?
+  sql             String
+  database        String           @default("postgresql")
+  databaseId      String?
+  databaseContext DatabaseContext? @relation(fields: [databaseId], references: [id], onDelete: SetNull)
+  isPublic        Boolean          @default(false)
+  isFavorite      Boolean          @default(false)
+  copyCount       Int              @default(0)
+  status          String           @default("active")
+  userId          String
+  user            User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tags            Tag[]            @relation("QueryToTag")
+  versions        QueryVersion[]
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  deletedAt       DateTime?
+
+  @@index([userId, isPublic])
+  @@index([databaseId])
 }
 
 model Tag {
@@ -86,24 +93,30 @@ model QueryVersion {
 }
 
 model Routine {
-  id          String           @id @default(cuid())
-  name        String
-  description String?
-  type        String // "function" | "procedure" | "trigger" | "view"
-  database    String // DatabaseType
-  sql         String // DDL completo
-  parameters  String? // JSON serializado: RoutineParameter[]
-  returnType  String? // preenchido apenas quando type = "function"
-  status      String           @default("active") // "active" | "draft"
-  isFavorite  Boolean          @default(false)
-  copyCount   Int              @default(0)
-  userId      String
-  user        User             @relation(fields: [userId], references: [id], onDelete: Cascade)
-  tags        Tag[]            @relation("RoutineToTag")
-  versions    RoutineVersion[]
-  createdAt   DateTime         @default(now())
-  updatedAt   DateTime         @updatedAt
-  deletedAt   DateTime?
+  id              String           @id @default(cuid())
+  name            String
+  description     String?
+  type            String // "function" | "procedure" | "trigger" | "view"
+  database        String // DatabaseType
+  databaseId      String?
+  databaseContext DatabaseContext? @relation(fields: [databaseId], references: [id], onDelete: SetNull)
+  isPublic        Boolean          @default(false)
+  sql             String // DDL completo
+  parameters      String? // JSON serializado: RoutineParameter[]
+  returnType      String? // preenchido apenas quando type = "function"
+  status          String           @default("active") // "active" | "draft"
+  isFavorite      Boolean          @default(false)
+  copyCount       Int              @default(0)
+  userId          String
+  user            User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tags            Tag[]            @relation("RoutineToTag")
+  versions        RoutineVersion[]
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  deletedAt       DateTime?
+
+  @@index([userId, isPublic])
+  @@index([databaseId])
 }
 
 model RoutineVersion {
@@ -112,4 +125,22 @@ model RoutineVersion {
   routine   Routine  @relation(fields: [routineId], references: [id], onDelete: Cascade)
   sql       String
   createdAt DateTime @default(now())
+}
+
+model DatabaseContext {
+  id               String    @id @default(cuid())
+  name             String
+  description      String?
+  type             String
+  schemaFormat     String
+  schemaDefinition String
+  isPublic         Boolean   @default(false)
+  userId           String
+  user             User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  queries          Query[]
+  routines         Routine[]
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  @@index([userId, isPublic])
 }

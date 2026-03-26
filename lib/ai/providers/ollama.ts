@@ -1,5 +1,6 @@
 import { AIAnalysisResult } from '@/types/ai'
 import { buildPrompt } from '../prompt'
+import type { DatabaseContext } from '@prisma/client'
 
 function extractJSON(text: string): AIAnalysisResult {
   try {
@@ -14,12 +15,13 @@ function extractJSON(text: string): AIAnalysisResult {
 export async function analyzeWithOllama(
   sql: string,
   dialect: string,
-  model: string
-): Promise<AIAnalysisResult> {
+    model: string,
+    databaseContext?: DatabaseContext | null
+  ): Promise<AIAnalysisResult> {
   const baseUrl = process.env.OLLAMA_BASE_URL
   if (!baseUrl) throw new Error('OLLAMA_BASE_URL não configurado no servidor')
 
-  const { system, user } = buildPrompt(sql, dialect)
+    const { system, user } = buildPrompt(sql, dialect, databaseContext)
 
   const response = await fetch(`${baseUrl}/v1/chat/completions`, {
     method: 'POST',

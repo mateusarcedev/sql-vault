@@ -41,6 +41,7 @@ SQL Vault é um sistema local-first projetado para desenvolvedores, analistas de
 * **Query**: Representa um script SQL salvo.
 
   * *Obrigatórios*: `id`, `name`, `sql`, `database` (enum), `status` (`'active' | 'draft'`), `isFavorite`, `copyCount`, `userId`.
+  * *Visibilidade*: `databaseId` (opcional, FK para `DatabaseContext`) e `isPublic`.
   * *Especial*: `deletedAt` para funcionalidade de soft delete.
   * *Relações*: Possui muitas `tags` e `versions`.
 * **QueryVersion**: Snapshot imutável de um Query em um ponto no tempo.
@@ -52,6 +53,7 @@ SQL Vault é um sistema local-first projetado para desenvolvedores, analistas de
   * *Especial*: Compartilhada de forma intercambiável entre Queries e Routines por meio de relações independentes.
 * **Routine**: Representa uma sequência executável ou job agendado de banco de dados.
   * *Obrigatórios*: `id`, `name`, `sql`, `database`, `type`, `userId`.
+  * *Visibilidade*: `databaseId` (opcional, FK para `DatabaseContext`) e `isPublic`.
   * *Especial*: `parameters` (deve ser serializado como string JSON ao persistir; desserializado ao ler). Usa `deletedAt` para soft delete.
   * *Relações*: Possui muitas `tags` e `versions`.
 * **RoutineVersion**: Snapshot imutável de uma Routine em um ponto no tempo.
@@ -64,6 +66,10 @@ SQL Vault é um sistema local-first projetado para desenvolvedores, analistas de
 * **UserAIConfig**: Configuração de IA por usuário.
   * *Obrigatórios*: `userId`, `provider`, `model`.
   * *Opcional*: Chaves por provedor (`openaiApiKey`, `anthropicApiKey`, `geminiApiKey`).
+* **DatabaseContext**: Contexto de schema por usuário para enriquecer análise de IA e controlar publicação.
+  * *Obrigatórios*: `id`, `name`, `type`, `schemaFormat`, `schemaDefinition`, `userId`.
+  * *Visibilidade*: `isPublic`.
+  * *Relações*: Pode ser referenciado por `Query` e `Routine` via `databaseId` (com `onDelete: SetNull`).
 
 ## 5. Regras arquiteturais
 
@@ -73,6 +79,8 @@ SQL Vault é um sistema local-first projetado para desenvolvedores, analistas de
 4. **Metadados compartilhados**: Modelos `Tag` são utilizados para categorização em múltiplos domínios. Eles são compartilhados entre `Query` e `Routine` por meio de relações distintas (`queries` / `routines` nos campos array do modelo Tag).
 5. **Segurança de token**: A string `token` pertencente a uma entidade `ApiKey` é exposta ao cliente exatamente uma vez: na resposta de `POST /api/keys`. É estritamente proibido retorná-la em quaisquer requisições `GET` subsequentes ou listas.
 6. **Versionamento automático**: Os handlers `PUT /api/queries/[id]` e `PUT /api/routines/[id]` devem comparar o campo `sql` recebido com o valor persistido antes de executar o update. Se houver diferença, criar um registro em `QueryVersion` ou `RoutineVersion` com o SQL atual (antes do update) antes de sobrescrever. Nunca criar versão se o SQL não mudou.
+7. **Visibilidade pública efetiva**: Um `Query`/`Routine` só é listado em escopo público quando `isPublic=true` **e**, se houver `databaseId`, o `DatabaseContext.isPublic=true`.
+8. **Delete de DatabaseContext**: `DatabaseContext` pode ser removido via hard-delete, mas deve primeiro desvincular `Query`/`Routine` associados (`databaseId=null`) e forçar `isPublic=false` desses recursos em transação atômica.
 
 ## 6. Autenticação
 
@@ -108,6 +116,7 @@ A resolução de token passa exclusivamente por um único ponto de verdade: a fu
 **API de Queries**
 
 * `GET    /api/queries`             - Lista todas as queries do usuário atual (suporta filtro `?search={term}`).
+* `GET    /api/queries?scope=public` - Lista queries públicas com metadata de owner e aplicação da regra de visibilidade efetiva.
 * `POST   /api/queries`             - Cria uma nova query SQL.
 * `GET    /api/queries/[id]`        - Busca uma query específica e seus detalhes completos.
 * `PUT    /api/queries/[id]`        - Modifica uma query existente.
@@ -117,6 +126,7 @@ A resolução de token passa exclusivamente por um único ponto de verdade: a fu
 **API de Routines**
 
 * `GET    /api/routines`            - Lista todas as routines de banco do usuário atual.
+* `GET    /api/routines?scope=public` - Lista routines públicas com metadata de owner e aplicação da regra de visibilidade efetiva.
 * `POST   /api/routines`            - Cria uma nova routine.
 * `GET    /api/routines/[id]`       - Busca os detalhes de uma routine específica.
 * `PUT    /api/routines/[id]`        - Modifica uma routine existente.
@@ -127,6 +137,14 @@ A resolução de token passa exclusivamente por um único ponto de verdade: a fu
 
 * `GET    /api/tags`                - Lista todas as tags criadas pelo usuário.
 * `POST   /api/tags`               - Cria uma nova instância de tag.
+
+**API de Database Contexts**
+
+* `GET    /api/database-contexts?scope=mine|public|all` - Lista contextos por escopo.
+* `POST   /api/database-contexts` - Cria um contexto de banco do usuário autenticado.
+* `GET    /api/database-contexts/[id]` - Retorna contexto por id (owner ou público).
+* `PUT    /api/database-contexts/[id]` - Atualiza contexto (somente owner).
+* `DELETE /api/database-contexts/[id]` - Exclui contexto com desvinculação atômica de recursos relacionados.
 
 **API de Exportação**
 
@@ -144,7 +162,7 @@ A resolução de token passa exclusivamente por um único ponto de verdade: a fu
 * `GET    /api/ai/config`           - Retorna configuração atual de IA do usuário.
 * `PUT    /api/ai/config`           - Atualiza provedor, modelo e chaves de IA do usuário.
 * `GET    /api/ai/models?provider=` - Lista modelos por provedor com fetch dinâmico e cache de curta duração.
-* `POST   /api/ai/analyze`          - Executa análise de SQL e retorna explicação/sugestões estruturadas.
+* `POST   /api/ai/analyze`          - Executa análise de SQL e retorna explicação/sugestões estruturadas (aceita `databaseId` opcional para injetar contexto de schema com truncamento seguro).
 
 **API de Versões** *(Suporta Sessão e API Key)*
 
@@ -159,12 +177,12 @@ A resolução de token passa exclusivamente por um único ponto de verdade: a fu
 
 **API de Export/Import** *(Export suporta Sessão e API Key; Import requer apenas Sessão)*
 
-* `GET    /api/export?format=json`
-  - Exporta todas as queries, routines e tags como JSON (`ExportPayload` version 2).
+* `GET    /api/export?format=json&version=1|2|3`
+  - Exporta dados em versões compatíveis (`v3` inclui `databaseContexts`, `databaseId` e `isPublic`).
 * `GET    /api/export?format=sql`
   - Exporta queries e routines ativas como arquivo `.sql` comentado.
 * `POST   /api/import`
-  - Importa payload JSON (version 1 ou 2). Estratégia: upsert por nome. Requer sessão NextAuth — API Key não é aceita nesta rota.
+  - Importa payload JSON (version 1, 2 ou 3). Em `v3`, mapeia ids de `DatabaseContext` e aplica fallback seguro (`databaseId=null`, `isPublic=false`) quando não houver mapeamento. Requer sessão NextAuth — API Key não é aceita nesta rota.
 
 ## 9. Padrões de frontend
 
