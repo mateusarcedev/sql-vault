@@ -5,6 +5,7 @@ const createDbMock = () => ({
   findUnique: vi.fn().mockResolvedValue(null),
   findFirst: vi.fn().mockResolvedValue(null),
   create: vi.fn().mockResolvedValue({}),
+  upsert: vi.fn().mockResolvedValue({}),
   update: vi.fn().mockResolvedValue({}),
   updateMany: vi.fn().mockResolvedValue({}),
   delete: vi.fn().mockResolvedValue({}),

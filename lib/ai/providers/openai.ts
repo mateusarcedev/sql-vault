@@ -6,17 +6,23 @@ export async function analyzeWithOpenAI(
   sql: string,
   dialect: string,
   model: string,
-  apiKey: string,
-  databaseContext?: DatabaseContext | null
+  apiKey: string | null,
+  databaseContext?: DatabaseContext | null,
+  endpointUrl = 'https://api.openai.com/v1/chat/completions'
 ): Promise<AIAnalysisResult> {
   const { system, user } = buildPrompt(sql, dialect, databaseContext)
 
-  const response = await fetch('https://api.openai.com/v1/chat/completions', {
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+  }
+
+  if (apiKey) {
+    headers.Authorization = `Bearer ${apiKey}`
+  }
+
+  const response = await fetch(endpointUrl, {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${apiKey}`,
-    },
+    headers,
     body: JSON.stringify({
       model,
       messages: [

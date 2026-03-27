@@ -1,4 +1,11 @@
-export type AIProvider = 'ollama' | 'openai' | 'anthropic' | 'gemini'
+export type AIProvider =
+  | 'ollama'
+  | 'openai'
+  | 'anthropic'
+  | 'gemini'
+  | 'openai-compatible'
+  | 'ollama-compatible'
+  | 'open-webui'
 
 export type PerformanceSeverity = 'info' | 'warning' | 'error'
 
@@ -24,4 +31,6 @@ export type AIConfigResponse = {
   hasAnthropicKey: boolean
   hasGeminiKey: boolean
   ollamaAvailable: boolean
+  modelsUrl: string | null
+  connectionUrl: string | null
 }

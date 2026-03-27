@@ -54,6 +54,51 @@ describe('AI Analyze API /api/ai/analyze', () => {
       const res = await POST(req)
       expect(res.status).toBe(200)
     })
+
+    it('usa endpoint customizado para Open WebUI', async () => {
+      vi.mocked(prisma.userAIConfig.findUnique).mockResolvedValue({
+        userId: 'user-1',
+        provider: 'open-webui',
+        model: 'llama3.1:8b',
+        openaiApiKey: null,
+        anthropicApiKey: null,
+        geminiApiKey: null,
+        connectionUrl: 'https://openwebui.example.com/api/chat/completions',
+        modelsUrl: 'https://openwebui.example.com/api/models',
+      } as any)
+
+      vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
+        ok: true,
+        json: async () => ({
+          choices: [
+            {
+              message: {
+                content: JSON.stringify({
+                  explanation: 'Query simples',
+                  suggestedName: 'select_one',
+                  suggestedDescription: 'Retorna 1',
+                  suggestedTags: [],
+                  performanceReview: [],
+                }),
+              },
+            },
+          ],
+        }),
+      } as any))
+
+      const body = JSON.stringify({ sql: 'SELECT 1', dialect: 'postgresql' })
+      const req = new NextRequest('http://localhost/api/ai/analyze', {
+        method: 'POST',
+        body,
+      })
+
+      const res = await POST(req)
+      expect(res.status).toBe(200)
+      expect(fetch).toHaveBeenCalledWith(
+        'https://openwebui.example.com/api/chat/completions',
+        expect.any(Object)
+      )
+    })
   })
 
   describe('analyze com databaseId válido', () => {

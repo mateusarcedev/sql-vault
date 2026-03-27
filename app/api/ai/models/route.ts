@@ -13,6 +13,58 @@ const fetchOllamaModels = async (baseUrl: string): Promise<string[]> => {
   return (data?.models ?? []).map((model: { name: string }) => model.name)
 }
 
+const normalizeModelList = (payload: unknown): string[] => {
+  if (Array.isArray(payload)) {
+    return payload
+      .map((item) => {
+        if (typeof item === 'string') return item
+        if (item && typeof item === 'object') {
+          const model = item as { id?: string; name?: string }
+          return model.id ?? model.name ?? null
+        }
+        return null
+      })
+      .filter((id): id is string => Boolean(id))
+      .sort((a, b) => a.localeCompare(b))
+  }
+
+  if (!payload || typeof payload !== 'object') return []
+
+  const data = payload as {
+    data?: Array<{ id?: string }>
+    models?: Array<{ id?: string; name?: string }>
+  }
+
+  if (Array.isArray(data.data)) {
+    return data.data
+      .map((model) => model.id)
+      .filter((id): id is string => Boolean(id))
+      .sort((a, b) => a.localeCompare(b))
+  }
+
+  if (Array.isArray(data.models)) {
+    return data.models
+      .map((model) => model.id ?? model.name)
+      .filter((id): id is string => Boolean(id))
+      .sort((a, b) => a.localeCompare(b))
+  }
+
+  return []
+}
+
+const fetchCustomModels = async (modelsUrl: string, apiKey?: string | null): Promise<string[]> => {
+  const headers: Record<string, string> = {}
+  if (apiKey) {
+    headers.Authorization = `Bearer ${apiKey}`
+  }
+
+  const response = await fetch(modelsUrl, { headers })
+  if (!response.ok) return []
+
+  const data = await response.json()
+  return normalizeModelList(data)
+}
+
 const fetchOpenAIModels = async (apiKey: string): Promise<string[]> => {
   const response = await fetch('https://api.openai.com/v1/models', {
     headers: {
@@ -99,7 +151,14 @@ export const GET = async (req: Request) => {
       return NextResponse.json({ models, cached: false })
     }
 
-    if (!['openai', 'anthropic', 'gemini'].includes(provider)) {
+    if (![
+      'openai',
+      'anthropic',
+      'gemini',
+      'openai-compatible',
+      'ollama-compatible',
+      'open-webui',
+    ].includes(provider)) {
       return NextResponse.json({ message: 'Provedor desconhecido' }, { status: 400 })
     }
 
@@ -109,11 +168,16 @@ export const GET = async (req: Request) => {
         openaiApiKey: true,
         anthropicApiKey: true,
         geminiApiKey: true,
+        modelsUrl: true,
       },
     })
 
     let models: string[] = []
-    const cacheKey = `${session.user.id}:${provider}`
+    const cacheSuffix =
+      provider === 'openai-compatible' || provider === 'ollama-compatible' || provider === 'open-webui'
+        ? `:${config?.modelsUrl ?? ''}`
+        : ''
+    const cacheKey = `${session.user.id}:${provider}${cacheSuffix}`
     const cached = modelsCache.get(cacheKey)
     const forceRefresh = Boolean(refreshToken)
 
@@ -131,6 +195,18 @@ export const GET = async (req: Request) => {
 
     if (provider === 'gemini' && config?.geminiApiKey) {
       models = await fetchGeminiModels(config.geminiApiKey)
+    }
+
+    if (provider === 'openai-compatible' && config?.modelsUrl) {
+      models = await fetchCustomModels(config.modelsUrl, config.openaiApiKey)
+    }
+
+    if (provider === 'open-webui' && config?.modelsUrl) {
+      models = await fetchCustomModels(config.modelsUrl, config.openaiApiKey)
+    }
+
+    if (provider === 'ollama-compatible' && config?.modelsUrl) {
+      models = await fetchCustomModels(config.modelsUrl)
     }
 
     modelsCache.set(cacheKey, { models, expiresAt: Date.now() + MODELS_CACHE_TTL_MS })

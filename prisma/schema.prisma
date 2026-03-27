@@ -27,11 +27,13 @@ model UserAIConfig {
   id              String   @id @default(cuid())
   userId          String   @unique
   user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  provider        String   // "ollama" | "openai" | "anthropic" | "gemini"
+  provider        String   // "ollama" | "openai" | "anthropic" | "gemini" | "openai-compatible" | "ollama-compatible" | "open-webui"
   model           String
   openaiApiKey    String?
   anthropicApiKey String?
   geminiApiKey    String?
+  modelsUrl       String?
+  connectionUrl   String?
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 }

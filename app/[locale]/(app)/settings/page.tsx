@@ -98,10 +98,15 @@ export default function SettingsPage() {
   const [openaiKey, setOpenaiKey] = useState('')
   const [anthropicKey, setAnthropicKey] = useState('')
   const [geminiKey, setGeminiKey] = useState('')
+  const [modelsUrl, setModelsUrl] = useState('')
+  const [connectionUrl, setConnectionUrl] = useState('')
   const [showOpenaiKey, setShowOpenaiKey] = useState(false)
   const [showAnthropicKey, setShowAnthropicKey] = useState(false)
   const [showGeminiKey, setShowGeminiKey] = useState(false)
   const [modelComboboxOpen, setModelComboboxOpen] = useState(false)
+
+  const supportsCustomEndpoints =
+    aiProvider === 'openai-compatible' || aiProvider === 'ollama-compatible' || aiProvider === 'open-webui'
 
   const { initialize } = useQueryStore()
   const {
@@ -135,6 +140,8 @@ export default function SettingsPage() {
     if (aiConfig) {
       setAiProvider((aiConfig.provider as AIProvider) ?? '')
       setAiModel(aiConfig.model ?? '')
+      setModelsUrl(aiConfig.modelsUrl ?? '')
+      setConnectionUrl(aiConfig.connectionUrl ?? '')
     }
   }, [aiConfig])
 
@@ -146,6 +153,10 @@ export default function SettingsPage() {
     setAiProvider(value)
     setAiModel('')
     setModelsRefreshKey(0)
+    if (value !== 'openai-compatible' && value !== 'ollama-compatible' && value !== 'open-webui') {
+      setModelsUrl('')
+      setConnectionUrl('')
+    }
   }
 
   const handleRefreshModels = () => {
@@ -163,6 +174,8 @@ export default function SettingsPage() {
           openaiApiKey: openaiKey,
           anthropicApiKey: anthropicKey,
           geminiApiKey: geminiKey,
+          modelsUrl,
+          connectionUrl,
         }),
       })
       if (!res.ok) {
@@ -565,11 +578,14 @@ export default function SettingsPage() {
                                 <SelectItem value="ollama">{tAI('ollamaCompany')}</SelectItem>
                               )}
                               <SelectItem value="openai">OpenAI</SelectItem>
+                              <SelectItem value="openai-compatible">OpenAI Compatible</SelectItem>
+                              <SelectItem value="open-webui">Open WebUI</SelectItem>
+                              <SelectItem value="ollama-compatible">Ollama Compatible</SelectItem>
                               <SelectItem value="anthropic">Claude (Anthropic)</SelectItem>
                               <SelectItem value="gemini">Gemini (Google)</SelectItem>
                             </SelectContent>
                           </Select>
-                          {aiProvider === 'ollama' && (
+                          {(aiProvider === 'ollama' || aiProvider === 'ollama-compatible') && (
                             <p className="text-xs text-muted-foreground">{tAI('ollamaNote')}</p>
                           )}
                         </div>
@@ -639,20 +655,70 @@ export default function SettingsPage() {
                               <RefreshCcw className={`h-4 w-4 ${isLoadingModels ? 'animate-spin' : ''}`} />
                             </Button>
                           </div>
+                          <Input
+                            value={aiModel}
+                            onChange={(e) => setAiModel(e.target.value)}
+                            placeholder={tAI('manualModelPlaceholder')}
+                          />
                         </div>
                       </div>
 
-                      {aiProvider && aiProvider !== 'ollama' && (
+                      {supportsCustomEndpoints && (
+                        <div className="space-y-4 rounded-lg border p-4">
+                          <p className="text-sm font-medium">{tAI('customEndpointsTitle')}</p>
+                          <p className="text-xs text-muted-foreground">{tAI('customEndpointsDescription')}</p>
+
+                          <div className="space-y-2">
+                            <Label htmlFor="models-url">{tAI('modelsUrl')}</Label>
+                            <Input
+                              id="models-url"
+                              type="url"
+                              value={modelsUrl}
+                              onChange={(e) => setModelsUrl(e.target.value)}
+                              placeholder={
+                                aiProvider === 'open-webui'
+                                  ? 'https://openwebui.example.com/api/models'
+                                  : aiProvider === 'ollama-compatible'
+                                    ? 'https://seu-ollama.example.com/api/tags'
+                                    : 'https://sua-api.example.com/v1/models'
+                              }
+                            />
+                          </div>
+
+                          <div className="space-y-2">
+                            <Label htmlFor="connection-url">{tAI('connectionUrl')}</Label>
+                            <Input
+                              id="connection-url"
+                              type="url"
+                              value={connectionUrl}
+                              onChange={(e) => setConnectionUrl(e.target.value)}
+                              placeholder={
+                                aiProvider === 'open-webui'
+                                  ? 'https://openwebui.example.com/api/chat/completions'
+                                  : aiProvider === 'ollama-compatible'
+                                    ? 'https://seu-ollama.example.com/v1/chat/completions'
+                                    : 'https://sua-api.example.com/v1/chat/completions'
+                              }
+                            />
+                          </div>
+
+                          {aiProvider === 'open-webui' && (
+                            <p className="text-xs text-muted-foreground">{tAI('openWebUiHint')}</p>
+                          )}
+                        </div>
+                      )}
+
+                      {aiProvider && aiProvider !== 'ollama' && aiProvider !== 'ollama-compatible' && (
                         <div className="space-y-4 rounded-lg border p-4">
                           <p className="text-sm font-medium">{tAI('apiKeySection')}</p>
                           <p className="text-xs text-muted-foreground">
                             {tAI('keysStoredLocally')}
                           </p>
 
-                          {aiProvider === 'openai' && (
+                          {(aiProvider === 'openai' || aiProvider === 'openai-compatible' || aiProvider === 'open-webui') && (
                             <div className="space-y-2">
                               <Label htmlFor="openai-key">
-                                OpenAI API Key
+                                {aiProvider === 'openai' ? 'OpenAI API Key' : tAI('compatibleApiKey')}
                                 {aiConfig?.hasOpenaiKey && <Badge variant="secondary" className="ml-2 text-xs">{tAI('keyConfigured')}</Badge>}
                               </Label>
                               <div className="relative">
@@ -738,7 +804,7 @@ export default function SettingsPage() {
                         </div>
                       )}
 
-                      {aiProvider === 'ollama' && (
+                      {(aiProvider === 'ollama' || aiProvider === 'ollama-compatible') && (
                         <div className="flex items-center gap-2 text-sm text-muted-foreground rounded-lg border p-4 bg-muted/30">
                           <Info className="h-4 w-4 shrink-0" />
                           <span>{tAI('ollamaNoAuth')}</span>
@@ -747,7 +813,12 @@ export default function SettingsPage() {
 
                       <Button
                         onClick={() => saveAIConfigMutation.mutate()}
-                        disabled={!aiProvider || !aiModel || saveAIConfigMutation.isPending}
+                        disabled={
+                          !aiProvider ||
+                          !aiModel ||
+                          (supportsCustomEndpoints && (!modelsUrl.trim() || !connectionUrl.trim())) ||
+                          saveAIConfigMutation.isPending
+                        }
                         className="gap-2"
                       >
                         {saveAIConfigMutation.isPending && <Loader2 className="h-4 w-4 animate-spin" />}

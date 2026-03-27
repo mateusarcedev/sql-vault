@@ -15,15 +15,20 @@ function extractJSON(text: string): AIAnalysisResult {
 export async function analyzeWithOllama(
   sql: string,
   dialect: string,
-    model: string,
-    databaseContext?: DatabaseContext | null
-  ): Promise<AIAnalysisResult> {
-  const baseUrl = process.env.OLLAMA_BASE_URL
-  if (!baseUrl) throw new Error('OLLAMA_BASE_URL não configurado no servidor')
+  model: string,
+  databaseContext?: DatabaseContext | null,
+  endpointUrl?: string
+): Promise<AIAnalysisResult> {
+  let requestUrl = endpointUrl
+  if (!requestUrl) {
+    const baseUrl = process.env.OLLAMA_BASE_URL
+    if (!baseUrl) throw new Error('OLLAMA_BASE_URL não configurado no servidor')
+    requestUrl = `${baseUrl}/v1/chat/completions`
+  }
 
-    const { system, user } = buildPrompt(sql, dialect, databaseContext)
+  const { system, user } = buildPrompt(sql, dialect, databaseContext)
 
-  const response = await fetch(`${baseUrl}/v1/chat/completions`, {
+  const response = await fetch(requestUrl, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({

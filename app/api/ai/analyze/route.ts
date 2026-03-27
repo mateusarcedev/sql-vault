@@ -56,6 +56,8 @@ export const POST = async (req: Request) => {
         openaiApiKey: config.openaiApiKey,
         anthropicApiKey: config.anthropicApiKey,
         geminiApiKey: config.geminiApiKey,
+        modelsUrl: config.modelsUrl,
+        connectionUrl: config.connectionUrl,
       }, databaseContext)
 
       const parsed = aiAnalysisResultSchema.safeParse(result)

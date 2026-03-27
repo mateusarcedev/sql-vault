@@ -52,4 +52,61 @@ describe('AI Models API', () => {
     expect(res.status).toBe(200)
     expect(body.models).toEqual([])
   })
+
+  it('retorna modelos para Open WebUI via URL customizada', async () => {
+    vi.mocked(prisma.userAIConfig.findUnique).mockResolvedValue({
+      userId: 'user-1',
+      openaiApiKey: 'owui-key',
+      modelsUrl: 'https://openwebui.example.com/api/models',
+    } as any)
+
+    vi.mocked(fetch).mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        data: [
+          { id: 'llama3.1:8b' },
+          { id: 'qwen2.5:14b' },
+        ],
+      }),
+    } as any)
+
+    const req = new NextRequest('http://localhost/api/ai/models?provider=open-webui&refresh=1')
+    const res = await GET(req)
+    const body = await res.json()
+
+    expect(res.status).toBe(200)
+    expect(body.models).toEqual(['llama3.1:8b', 'qwen2.5:14b'])
+    expect(fetch).toHaveBeenCalledWith('https://openwebui.example.com/api/models', {
+      headers: {
+        Authorization: 'Bearer owui-key',
+      },
+    })
+  })
+
+  it('retorna modelos para Ollama-compatible via URL customizada', async () => {
+    vi.mocked(prisma.userAIConfig.findUnique).mockResolvedValue({
+      userId: 'user-1',
+      modelsUrl: 'https://ollama.example.com/api/tags',
+    } as any)
+
+    vi.mocked(fetch).mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        models: [
+          { name: 'llama3.2:3b' },
+          { name: 'mistral:latest' },
+        ],
+      }),
+    } as any)
+
+    const req = new NextRequest('http://localhost/api/ai/models?provider=ollama-compatible&refresh=1')
+    const res = await GET(req)
+    const body = await res.json()
+
+    expect(res.status).toBe(200)
+    expect(body.models).toEqual(['llama3.2:3b', 'mistral:latest'])
+    expect(fetch).toHaveBeenCalledWith('https://ollama.example.com/api/tags', {
+      headers: {},
+    })
+  })
 })
