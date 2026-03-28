@@ -54,22 +54,44 @@ export const GET: any = async (req: any) => {
   if (sortBy === 'copyCount') orderBy = { copyCount: "desc" }
 
   try {
+    const include: any = {
+      tags: true,
+      ...(scope === 'public' ? { user: true } : {}),
+    }
+
     const routines = await db.routine.findMany({
       where: whereCondition,
-      include: {
-        tags: true,
-        user: scope === 'public',
-        databaseContext: scope === 'public',
-      },
+      include,
       orderBy,
     })
 
-    // Filtra routines com contexto privado na listagem pública
+    // Filtra routines com contexto privado na listagem pública sem depender
+    // da relação `databaseContext` no include (evita incompatibilidade de client Prisma).
     let filteredRoutines = routines
     if (scope === 'public') {
+      const contextIds = Array.from(
+        new Set(
+          routines
+            .map((routine) => routine.databaseId)
+            .filter((id): id is string => Boolean(id))
+        )
+      )
+
+      let publicContextIds = new Set<string>()
+      if (contextIds.length > 0) {
+        const publicContexts = await db.databaseContext.findMany({
+          where: {
+            id: { in: contextIds },
+            isPublic: true,
+          },
+          select: { id: true },
+        })
+        publicContextIds = new Set(publicContexts.map((context) => context.id))
+      }
+
       filteredRoutines = routines.filter(routine => {
-        if (routine.databaseId && routine.databaseContext) {
-          return routine.databaseContext.isPublic === true
+        if (routine.databaseId) {
+          return publicContextIds.has(routine.databaseId)
         }
         // Se não tem databaseId, mantém (databaseId=null com isPublic=true é válido)
         return true
@@ -90,9 +112,6 @@ export const GET: any = async (req: any) => {
         }
         delete parsed.user
       }
-
-      // Remove databaseContext do response
-      delete (parsed as any).databaseContext
 
       return parsed
     })

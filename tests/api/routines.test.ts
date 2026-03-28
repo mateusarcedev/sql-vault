@@ -325,6 +325,9 @@ describe('Task 4 — Routines databaseId/isPublic', () => {
       }
 
       vi.mocked(prisma.routine.findMany).mockResolvedValue([publicRoutine] as any)
+      vi.mocked(prisma.databaseContext.findMany).mockResolvedValue([
+        { id: 'ctx-1' },
+      ] as any)
 
       const req = makeGetRequest('/api/routines?scope=public')
       const res = await GET(req)
