@@ -1,0 +1,94 @@
+name: Prisma Docker validation temporary
+
+on:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    env:
+      DATABASE_URL: file:./prisma/ci-validation.db
+      AUTH_SECRET: temporary-validation-secret-only
+      NEXTAUTH_URL: http://localhost:3000
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Generate Prisma client
+        run: npm run prisma:generate
+
+      - name: Validate application baseline
+        run: |
+          npm run lint
+          npm run typecheck
+          npm test
+          npm run build
+
+      - name: Prepare Docker environment
+        run: |
+          cat > .env <<'EOF'
+          AUTH_SECRET=temporary-docker-validation-secret
+          NEXTAUTH_URL=http://localhost:3000
+          DOCKER_DATABASE_URL=file:/data/dev.db
+          EOF
+          docker compose config
+
+      - name: Build Docker image without cache
+        run: docker compose build --no-cache
+
+      - name: Start with a fresh database
+        run: |
+          docker compose down -v --remove-orphans || true
+          docker compose up -d
+          for i in $(seq 1 30); do
+            if curl -fsS -o /dev/null http://127.0.0.1:3000; then
+              exit 0
+            fi
+            sleep 2
+          done
+          docker compose logs --no-color app
+          exit 1
+
+      - name: Verify fresh and existing migrations
+        run: |
+          docker compose exec -T app npm run db:migrate:deploy
+          docker compose exec -T app npx prisma migrate status
+
+      - name: Verify persistence across restart
+        run: |
+          docker compose exec -T app node -e "const Database=require('better-sqlite3');const db=new Database('/data/dev.db');db.exec('CREATE TABLE IF NOT EXISTS __docker_validation (id INTEGER PRIMARY KEY, value TEXT NOT NULL)');db.prepare('INSERT OR REPLACE INTO __docker_validation(id,value) VALUES(1,?)').run('persisted');db.close()"
+          docker compose restart app
+          for i in $(seq 1 30); do
+            if curl -fsS -o /dev/null http://127.0.0.1:3000; then
+              break
+            fi
+            sleep 2
+          done
+          docker compose exec -T app node -e "const Database=require('better-sqlite3');const db=new Database('/data/dev.db');const row=db.prepare('SELECT value FROM __docker_validation WHERE id=1').get();db.close();if(!row||row.value!=='persisted'){process.exit(1)};console.log(row.value)"
+
+      - name: Verify migration failure is surfaced
+        run: |
+          if docker compose run --rm -e DATABASE_URL=file:/proc/sql-vault-validation.db app npm run db:migrate:deploy; then
+            echo "Migration unexpectedly succeeded with an invalid SQLite path"
+            exit 1
+          fi
+          echo "Expected migration failure was surfaced"
+
+      - name: Show final container state
+        run: |
+          docker compose ps
+          docker compose logs --no-color app
+
+      - name: Cleanup
+        if: always()
+        run: docker compose down -v --remove-orphans
