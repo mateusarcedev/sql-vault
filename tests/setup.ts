@@ -23,6 +23,7 @@ const mockPrisma = {
   user: createDbMock(),
   databaseContext: createDbMock(),
   $transaction: vi.fn().mockResolvedValue([{}, {}, {}]),
+  $queryRawUnsafe: vi.fn().mockResolvedValue([{ ok: 1 }]),
 };
 
 // Mock global do Prisma — nunca tocar no banco real nos testes
