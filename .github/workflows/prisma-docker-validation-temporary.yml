@@ -10,7 +10,7 @@ jobs:
   validate:
     runs-on: ubuntu-latest
     env:
-      DATABASE_URL: file:./prisma/ci-validation.db
+      DATABASE_URL: file:./prisma/dev.db
       AUTH_SECRET: temporary-validation-secret-only
       NEXTAUTH_URL: http://localhost:3000
     steps:
@@ -26,6 +26,9 @@ jobs:
 
       - name: Generate Prisma client
         run: npm run prisma:generate
+
+      - name: Prepare test database
+        run: npm run db:migrate:deploy
 
       - name: Validate application baseline
         run: |
@@ -91,4 +94,7 @@ jobs:
 
       - name: Cleanup
         if: always()
-        run: docker compose down -v --remove-orphans
+        run: |
+          if [ -f .env ]; then
+            docker compose down -v --remove-orphans || true
+          fi
