@@ -9,11 +9,16 @@ RUN npm ci
 FROM base AS builder
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
+RUN npm run prisma:generate
 RUN npm run build
 
 FROM base AS prod-deps
 COPY package.json package-lock.json ./
-RUN npm ci --omit=dev && npm cache clean --force
+COPY prisma ./prisma
+COPY prisma.config.ts ./prisma.config.ts
+RUN npm ci --omit=dev
+RUN npm run prisma:generate
+RUN npm cache clean --force
 
 FROM base AS runner
 ENV NODE_ENV=production
@@ -24,6 +29,7 @@ COPY --from=prod-deps /app/node_modules ./node_modules
 COPY --from=builder /app/.next ./.next
 COPY --from=builder /app/public ./public
 COPY --from=builder /app/prisma ./prisma
+COPY --from=builder /app/prisma.config.ts ./prisma.config.ts
 COPY --from=builder /app/package.json ./package.json
 COPY --from=builder /app/next.config.mjs ./next.config.mjs
 COPY --from=builder /app/auth.ts ./auth.ts
@@ -35,4 +41,4 @@ COPY --from=builder /app/app ./app
 
 EXPOSE 3000
 
-CMD ["sh", "-c", "npx prisma migrate deploy && npm run start"]
+CMD ["sh", "-c", "npm run db:migrate:deploy && npm run start"]
