@@ -3,6 +3,9 @@ import { POST } from '@/app/api/import/route'
 import prisma from '@/lib/db'
 import { auth } from '@/auth'
 import { NextRequest } from 'next/server'
+import type { Session } from 'next-auth'
+
+const mockAuth = vi.mocked(auth as unknown as () => Promise<Session | null>)
 
 function makeImportRequest(payload: object): NextRequest {
   return new NextRequest('http://localhost/api/import', {
@@ -67,7 +70,7 @@ const basePayloadV3 = {
 describe('POST /api/import', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    vi.mocked(auth).mockResolvedValue({ user: { id: 'user-1' } } as any)
+    mockAuth.mockResolvedValue({ user: { id: 'user-1' } } as any)
     vi.mocked(prisma.tag.findUnique).mockResolvedValue(null)
     vi.mocked(prisma.tag.create).mockResolvedValue({ id: 'tag-novo' } as any)
     vi.mocked(prisma.query.findUnique).mockResolvedValue(null)
@@ -82,7 +85,7 @@ describe('POST /api/import', () => {
   })
 
   it('retorna 401 se não há sessão', async () => {
-    vi.mocked(auth).mockResolvedValue(null)
+    mockAuth.mockResolvedValue(null)
     const res = await POST(makeImportRequest(basePayloadV1))
     expect(res.status).toBe(401)
   })

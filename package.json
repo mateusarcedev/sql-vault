@@ -1,5 +1,5 @@
 {
-  "name": "my-project",
+  "name": "sql-vault",
   "version": "0.1.0",
   "private": true,
   "scripts": {
@@ -9,7 +9,8 @@
     "lint": "eslint .",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:coverage": "vitest run --coverage"
+    "test:coverage": "vitest run --coverage",
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@auth/prisma-adapter": "^2.11.1",
@@ -97,5 +98,8 @@
   },
   "overrides": {
     "dompurify": "3.3.3"
+  },
+  "engines": {
+    "node": ">=22.12 <23"
   }
 }

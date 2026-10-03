@@ -3,12 +3,15 @@ import { GET, POST } from '@/app/api/queries/route'
 import prisma from '@/lib/db'
 import { auth } from '@/auth'
 import { NextRequest } from 'next/server'
+import type { Session } from 'next-auth'
+
+const mockAuth = vi.mocked(auth as unknown as () => Promise<Session | null>)
 
 describe('GET /api/queries — isolamento por userId', () => {
   beforeEach(() => vi.clearAllMocks())
 
   it('retorna 401 se não há sessão nem API Key', async () => {
-    vi.mocked(auth).mockResolvedValue(null)
+    mockAuth.mockResolvedValue(null)
     vi.mocked(prisma.apiKey.findUnique).mockResolvedValue(null)
     const req = new NextRequest('http://localhost/api/queries')
     const res = await GET(req)
@@ -16,7 +19,7 @@ describe('GET /api/queries — isolamento por userId', () => {
   })
 
   it('filtra queries pelo userId da sessão', async () => {
-    vi.mocked(auth).mockResolvedValue({
+    mockAuth.mockResolvedValue({
       user: { id: 'user-A' }
     } as any)
     vi.mocked(prisma.query.findMany).mockResolvedValue([])
@@ -30,7 +33,7 @@ describe('GET /api/queries — isolamento por userId', () => {
   })
 
   it('filtra queries pelo userId da API Key quando não há sessão', async () => {
-    vi.mocked(auth).mockResolvedValue(null)
+    mockAuth.mockResolvedValue(null)
     vi.mocked(prisma.apiKey.findUnique).mockResolvedValue({
       id: 'key-1',
       userId: 'user-B',
@@ -48,7 +51,7 @@ describe('GET /api/queries — isolamento por userId', () => {
   })
 
   it('nunca retorna queries de outro usuário', async () => {
-    vi.mocked(auth).mockResolvedValue({ user: { id: 'user-A' } } as any)
+    mockAuth.mockResolvedValue({ user: { id: 'user-A' } } as any)
     vi.mocked(prisma.query.findMany).mockResolvedValue([])
     const req = new NextRequest('http://localhost/api/queries')
     await GET(req)

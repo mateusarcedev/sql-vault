@@ -35,6 +35,7 @@ const createQuery = (
       createdAt,
     },
   ],
+  isPublic: false,
   isFavorite,
   copyCount,
   createdAt,

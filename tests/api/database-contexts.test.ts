@@ -6,6 +6,9 @@ import { GET as GET_ID, PUT as UPDATE, DELETE as DELETE_CONTEXT } from '@/app/ap
 import prisma from '@/lib/db'
 import { auth } from '@/auth'
 import { NextRequest } from 'next/server'
+import type { Session } from 'next-auth'
+
+const mockAuth = vi.mocked(auth as unknown as () => Promise<Session | null>)
 
 const sqlitePath = path.join(process.cwd(), 'prisma', 'dev.db')
 const db = new Database(sqlitePath)
@@ -94,7 +97,7 @@ describe('Task 2 — Database Context API', () => {
   // AUTH TESTS
   describe('Authentication', () => {
     it('POST returns 401 when not authenticated', async () => {
-      vi.mocked(auth).mockResolvedValue(null)
+      mockAuth.mockResolvedValue(null)
 
       const req = makePostRequest({ name: 'Test', type: 'postgresql', schemaFormat: 'sql', schemaDefinition: 'SELECT 1' })
       const res = await CREATE(req)
@@ -103,7 +106,7 @@ describe('Task 2 — Database Context API', () => {
     })
 
     it('GET returns 401 when not authenticated', async () => {
-      vi.mocked(auth).mockResolvedValue(null)
+      mockAuth.mockResolvedValue(null)
 
       const req = makeGetRequest()
       const res = await GET_LIST(req)
@@ -115,7 +118,7 @@ describe('Task 2 — Database Context API', () => {
   // POST VALIDATION TESTS
   describe('POST /api/database-contexts', () => {
     beforeEach(() => {
-      vi.mocked(auth).mockResolvedValue({ user: { id: 'user-1' } } as any)
+      mockAuth.mockResolvedValue({ user: { id: 'user-1' } } as any)
     })
 
     it('creates context with valid payload', async () => {
@@ -201,7 +204,7 @@ describe('Task 2 — Database Context API', () => {
   // GET /list TESTS
   describe('GET /api/database-contexts', () => {
     beforeEach(() => {
-      vi.mocked(auth).mockResolvedValue({ user: { id: 'user-1' } } as any)
+      mockAuth.mockResolvedValue({ user: { id: 'user-1' } } as any)
     })
 
     it('returns only owner contexts on scope=mine', async () => {
@@ -307,7 +310,7 @@ describe('Task 2 — Database Context API', () => {
   // GET /[id] TESTS
   describe('GET /api/database-contexts/[id]', () => {
     beforeEach(() => {
-      vi.mocked(auth).mockResolvedValue({ user: { id: 'user-1' } } as any)
+      mockAuth.mockResolvedValue({ user: { id: 'user-1' } } as any)
     })
 
     it('returns context for owner', async () => {
@@ -374,7 +377,7 @@ describe('Task 2 — Database Context API', () => {
   // PUT TESTS
   describe('PUT /api/database-contexts/[id]', () => {
     beforeEach(() => {
-      vi.mocked(auth).mockResolvedValue({ user: { id: 'user-1' } } as any)
+      mockAuth.mockResolvedValue({ user: { id: 'user-1' } } as any)
     })
 
     it('updates context for owner', async () => {
@@ -459,7 +462,7 @@ describe('Task 2 — Database Context API', () => {
   // DELETE TESTS
   describe('DELETE /api/database-contexts/[id]', () => {
     beforeEach(() => {
-      vi.mocked(auth).mockResolvedValue({ user: { id: 'user-1' } } as any)
+      mockAuth.mockResolvedValue({ user: { id: 'user-1' } } as any)
     })
 
     it('nullifies linked Query records atomically', async () => {
