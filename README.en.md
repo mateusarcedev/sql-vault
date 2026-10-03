@@ -97,7 +97,7 @@
 ## Getting Started
 
 **Requirements:**
-- Node.js 18+
+- Node.js 22 LTS (>=22.12 <23)
 - npm
 
 **Install:**
