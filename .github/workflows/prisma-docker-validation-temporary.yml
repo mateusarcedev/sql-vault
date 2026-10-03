@@ -41,6 +41,7 @@ jobs:
         run: |
           cat > .env <<'EOF'
           AUTH_SECRET=temporary-docker-validation-secret
+          AUTH_TRUST_HOST=true
           NEXTAUTH_URL=http://localhost:3000
           DOCKER_DATABASE_URL=file:/data/dev.db
           EOF
@@ -53,14 +54,23 @@ jobs:
         run: |
           docker compose down -v --remove-orphans || true
           docker compose up -d
+          ready=0
           for i in $(seq 1 30); do
             if curl -fsS -o /dev/null http://127.0.0.1:3000; then
-              exit 0
+              ready=1
+              break
             fi
             sleep 2
           done
-          docker compose logs --no-color app
-          exit 1
+          if [ "$ready" -ne 1 ]; then
+            docker compose logs --no-color app
+            exit 1
+          fi
+          curl -fsS http://127.0.0.1:3000/api/auth/session
+          if docker compose logs --no-color app | grep -q "UntrustedHost"; then
+            echo "Auth.js reported UntrustedHost"
+            exit 1
+          fi
 
       - name: Verify fresh and existing migrations
         run: |
