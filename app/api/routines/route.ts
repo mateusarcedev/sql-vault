@@ -54,14 +54,12 @@ export const GET: any = async (req: any) => {
   if (sortBy === 'copyCount') orderBy = { copyCount: "desc" }
 
   try {
-    const include: any = {
-      tags: true,
-      ...(scope === 'public' ? { user: true } : {}),
-    }
-
     const routines = await db.routine.findMany({
       where: whereCondition,
-      include,
+      include: {
+        tags: true,
+        user: true,
+      },
       orderBy,
     })
 
@@ -110,8 +108,11 @@ export const GET: any = async (req: any) => {
           id: routine.user.id,
           name: routine.user.name,
         }
-        delete parsed.user
       }
+
+      // A relação user é carregada apenas para tipagem/owner metadata e não faz
+      // parte do payload original de scope=mine.
+      delete parsed.user
 
       return parsed
     })
