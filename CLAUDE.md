@@ -11,13 +11,14 @@ npm run lint         # ESLint
 npm run test         # Run tests once (Vitest)
 npm run test:watch   # Watch mode
 npm run test:coverage # Coverage report
+docker compose up -d db     # Start local PostgreSQL
 npx prisma migrate dev   # Apply/create DB migrations
 npx prisma studio        # Visual DB browser
 ```
 
 ## Architecture Overview
 
-**SQL Vault** is a local-first SQL query management system. It's a full-stack Next.js (App Router) application backed by SQLite via Prisma, with a companion VS Code extension.
+**SQL Vault** is a local-first SQL query management system. It's a full-stack Next.js (App Router) application backed by PostgreSQL via Prisma, with a companion VS Code extension.
 
 ### Route Structure
 
@@ -38,7 +39,7 @@ Three layers work together:
 - **External clients (VS Code extension)**: Bearer token API keys, resolved in `lib/auth-api-key.ts`
 - All API routes must accept both auth methods and enforce user ownership on every query
 
-### Database Rules (Prisma + SQLite)
+### Database Rules (Prisma + PostgreSQL)
 
 Key schema rules from `ARCHITECTURE.md`:
 - **Ownership**: Every resource (Query, Routine, Tag, ApiKey) belongs to a `userId`. All DB queries MUST filter by `userId`.
@@ -74,7 +75,7 @@ Key schema rules from `ARCHITECTURE.md`:
 ## Environment Variables
 
 ```
-DATABASE_URL=file:./prisma/dev.db
+DATABASE_URL=postgresql://sqlvault:sqlvault@localhost:5432/sqlvault?schema=public
 AUTH_SECRET=<openssl rand -base64 32>
 NEXTAUTH_URL=http://localhost:3000
 ```
