@@ -10,7 +10,7 @@ jobs:
   validate:
     runs-on: ubuntu-latest
     env:
-      DATABASE_URL: file:./prisma/baseline-validation.db
+      DATABASE_URL: file:./prisma/dev.db
       AUTH_SECRET: baseline-validation-only-not-a-production-secret
       NEXTAUTH_URL: http://localhost:3000
     steps:
@@ -21,6 +21,7 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npx prisma generate
+      - run: npx prisma migrate deploy
       - run: npm run lint
       - run: npm run typecheck
       - run: npm test
