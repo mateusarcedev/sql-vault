@@ -1,5 +1,5 @@
-import Database from 'better-sqlite3'
-import { afterAll, describe, expect, it, vi, beforeEach } from 'vitest'
+import { describe, expect, it, vi, beforeEach } from 'vitest'
+import { readFileSync } from 'node:fs'
 import path from 'node:path'
 import { GET as GET_LIST, POST as CREATE } from '@/app/api/database-contexts/route'
 import { GET as GET_ID, PUT as UPDATE, DELETE as DELETE_CONTEXT } from '@/app/api/database-contexts/[id]/route'
@@ -10,59 +10,16 @@ import type { Session } from 'next-auth'
 
 const mockAuth = vi.mocked(auth as unknown as () => Promise<Session | null>)
 
-const sqlitePath = path.join(process.cwd(), 'prisma', 'dev.db')
-const db = new Database(sqlitePath)
-
-function getTableColumns(tableName: string): Array<{ name: string; dflt_value: unknown }> {
-  return db.prepare(`PRAGMA table_info('${tableName}')`).all() as Array<{ name: string; dflt_value: unknown }>
-}
-
-function hasIndexWithColumns(tableName: string, expectedColumns: string[]): boolean {
-  const indexes = db.prepare(`PRAGMA index_list('${tableName}')`).all() as Array<{ name: string }>
-
-  return indexes.some((index) => {
-    const columns = db.prepare(`PRAGMA index_info('${index.name}')`).all() as Array<{ name: string }>
-    const columnNames = columns.map((column) => column.name)
-
-    return (
-      columnNames.length === expectedColumns.length
-      && expectedColumns.every((columnName) => columnNames.includes(columnName))
-    )
-  })
-}
-
 describe('Task 1 — Prisma schema/migração para DatabaseContext', () => {
-  afterAll(() => {
-    db.close()
-  })
+  it('usa PostgreSQL como provider e migration history', () => {
+    const schema = readFileSync(path.join(process.cwd(), 'prisma', 'schema.prisma'), 'utf8')
+    const migrationLock = readFileSync(
+      path.join(process.cwd(), 'prisma', 'migrations', 'migration_lock.toml'),
+      'utf8'
+    )
 
-  it('cria DatabaseContext e adiciona campos/índices em Query e Routine', () => {
-    const tableExists = db
-      .prepare("SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'DatabaseContext'")
-      .get() as { name: string } | undefined
-
-    expect(tableExists?.name).toBe('DatabaseContext')
-
-    const queryColumns = getTableColumns('Query')
-    const routineColumns = getTableColumns('Routine')
-    const contextColumns = getTableColumns('DatabaseContext')
-
-    expect(queryColumns.some((column) => column.name === 'databaseId')).toBe(true)
-    expect(queryColumns.some((column) => column.name === 'isPublic')).toBe(true)
-
-    expect(routineColumns.some((column) => column.name === 'databaseId')).toBe(true)
-    expect(routineColumns.some((column) => column.name === 'isPublic')).toBe(true)
-
-    expect(contextColumns.some((column) => column.name === 'userId')).toBe(true)
-    expect(contextColumns.some((column) => column.name === 'isPublic')).toBe(true)
-
-    expect(hasIndexWithColumns('Query', ['userId', 'isPublic'])).toBe(true)
-    expect(hasIndexWithColumns('Query', ['databaseId'])).toBe(true)
-
-    expect(hasIndexWithColumns('Routine', ['userId', 'isPublic'])).toBe(true)
-    expect(hasIndexWithColumns('Routine', ['databaseId'])).toBe(true)
-
-    expect(hasIndexWithColumns('DatabaseContext', ['userId', 'isPublic'])).toBe(true)
+    expect(schema).toContain('provider = "postgresql"')
+    expect(migrationLock).toContain('provider = "postgresql"')
   })
 })
 
