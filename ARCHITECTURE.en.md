@@ -11,7 +11,7 @@ SQL Vault is a local-first system for developers, data analysts, and engineering
 * **Next.js 16 (App Router)**: Full-stack React framework with API routes and clear server/client component boundaries.
 * **TypeScript**: Strong typing and safer contracts across the codebase.
 * **Prisma**: Type-safe ORM for data access, migrations, and schema generation.
-* **SQLite**: Primary local database, aligned with the local-first model.
+* **PostgreSQL 17**: Primary relational database. Local development runs it through Docker Compose and Prisma connects through the `pg` driver.
 * **NextAuth v5 (Auth.js)**: Session authentication with secure HTTP-only cookies and bcrypt password checks.
 * **next-intl**: Internationalization with locale-prefixed routes (`/en`, `/pt-BR`) and language-specific message catalogs.
 * **TanStack Query**: Remote state, caching, background updates, and invalidation.
@@ -30,7 +30,7 @@ SQL Vault is a local-first system for developers, data analysts, and engineering
 * `store/`: Zustand stores by domain (`query-store.ts`, `routine-store.ts`, `ui-store.ts`).
 * `types/`: Shared TypeScript types and interfaces.
 * `lib/`: Utility layer and system singletons (`db.ts`, `auth-api-key.ts`).
-* `prisma/`: `schema.prisma`, migrations, and SQLite file (`dev.db`).
+* `prisma/`: `schema.prisma` and PostgreSQL migrations.
 
 ## 4. Database Schema
 
@@ -192,14 +192,14 @@ Single source for API key resolution: `lib/auth-api-key.ts` (`getUserFromApiKey`
 
 | Variable | Required | Description |
 | --- | --- | --- |
-| `DATABASE_URL` | Yes | SQLite path (e.g. `file:./prisma/dev.db`) |
+| `DATABASE_URL` | Yes | PostgreSQL URL (e.g. `postgresql://sqlvault:sqlvault@localhost:5432/sqlvault?schema=public`) |
 | `AUTH_SECRET` | Yes | NextAuth secret (`openssl rand -base64 32`) |
 | `NEXTAUTH_URL` | Prod yes | Base URL (e.g. `http://localhost:3000`) |
 
 `.env.example` starter:
 
 ```env
-DATABASE_URL="file:./prisma/dev.db"
+DATABASE_URL="postgresql://sqlvault:sqlvault@localhost:5432/sqlvault?schema=public"
 AUTH_SECRET=""
 NEXTAUTH_URL="http://localhost:3000"
 ```
