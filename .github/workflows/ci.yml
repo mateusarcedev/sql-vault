@@ -322,6 +322,22 @@ jobs:
       - name: Build image
         run: docker compose build
 
+      - name: Verify vulnerable tooling is absent from runtime image
+        run: |
+          docker run --rm --entrypoint node sql-vault:local -e "
+            const forbidden = ['prisma', 'mysql2', 'deepmerge-ts', 'braces'];
+            for (const name of forbidden) {
+              try {
+                require.resolve(name);
+                console.error(name + ' unexpectedly exists in runtime image');
+                process.exit(1);
+              } catch (error) {
+                if (error && error.code !== 'MODULE_NOT_FOUND') throw error;
+              }
+            }
+            console.log('tooling-only vulnerable packages are absent from runtime image');
+          "
+
       - name: Start application and PostgreSQL
         run: docker compose up -d
 
@@ -437,7 +453,7 @@ jobs:
           NODE
 
       - name: Build production image
-        run: docker compose --env-file .env.production -f docker-compose.prod.yml build app
+        run: docker compose --env-file .env.production -f docker-compose.prod.yml build app migrate
 
       - name: Start production stack
         run: docker compose --env-file .env.production -f docker-compose.prod.yml up -d

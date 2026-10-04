@@ -26,3 +26,7 @@ node_modules/
 sqlvault-vscode
 # Local database backups
 backups/
+
+# Generated TypeScript/Tailwind artifacts
+*.tsbuildinfo
+test.css

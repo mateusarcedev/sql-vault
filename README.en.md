@@ -2,6 +2,9 @@
   <img src="public/sql-vault-logo.png" alt="SQL Vault Logo" width="200" />
   <br />
   <br />
+  <a href="https://github.com/mateusarcedev/sql-vault/actions/workflows/ci.yml">
+    <img src="https://github.com/mateusarcedev/sql-vault/actions/workflows/ci.yml/badge.svg" alt="CI" />
+  </a>
   <a href="https://opensource.org/licenses/MIT">
     <img src="https://img.shields.io/badge/License-MIT-blue.svg" alt="MIT License" />
   </a>
@@ -211,10 +214,13 @@ Available on [VS Code Marketplace](https://marketplace.visualstudio.com/items?it
 └── prisma/       - PostgreSQL schema definitions and migrations.
 ```
 
+## Production deployment
+
+For VPS deployment with PostgreSQL + Caddy + automatic HTTPS, see [DEPLOYMENT.en.md](DEPLOYMENT.en.md).
+
 ## Contributing
 
-Read `ARCHITECTURE.md` and `CONTRIBUTING.md`.
-Full contribution guidelines: [CONTRIBUTING.md](CONTRIBUTING.md)
+Read [ARCHITECTURE.en.md](ARCHITECTURE.en.md), [CONTRIBUTING.en.md](CONTRIBUTING.en.md), and the security policy in [SECURITY.md](SECURITY.md).
 
 ## License
 

@@ -2,6 +2,9 @@
   <img src="public/sql-vault-logo.png" alt="SQL Vault Logo" width="200" />
   <br />
   <br />
+  <a href="https://github.com/mateusarcedev/sql-vault/actions/workflows/ci.yml">
+    <img src="https://github.com/mateusarcedev/sql-vault/actions/workflows/ci.yml/badge.svg" alt="CI" />
+  </a>
   <a href="https://opensource.org/licenses/MIT">
     <img src="https://img.shields.io/badge/License-MIT-blue.svg" alt="MIT License" />
   </a>
@@ -217,8 +220,7 @@ Para VPS com PostgreSQL + Caddy + HTTPS automático, consulte [DEPLOYMENT.md](DE
 
 ## Contribuindo
 
-Leia o `ARCHITECTURE.md` e o `CONTRIBUTING.md`.
-Consulte o arquivo de diretrizes completo [aqui](CONTRIBUTING.md).
+Leia o [ARCHITECTURE.md](ARCHITECTURE.md), o [CONTRIBUTING.md](CONTRIBUTING.md) e a política de segurança em [SECURITY.md](SECURITY.md).
 
 ## Licença
 

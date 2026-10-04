@@ -26,7 +26,7 @@ Em produção:
 - PostgreSQL **não** publica `5432/tcp`;
 - a rede `backend` é marcada como interna pelo Docker;
 - o processo do SQL Vault roda como usuário não-root;
-- migrations e backfills de segurança rodam em `db:prepare` antes do Next.js.
+- migrations rodam em um serviço `migrate` one-shot antes da aplicação; os backfills de segurança rodam no startup do app.
 
 ## 1. Pré-requisitos da VPS
 
@@ -170,12 +170,16 @@ docker compose --env-file .env.production -f docker-compose.prod.yml ps
 curl -fsS https://sqlvault.example.com/api/health
 ```
 
-O container da aplicação executa automaticamente:
-1. validação de env;
-2. `prisma migrate deploy`;
-3. backfill de hashes de API key;
-4. backfill de criptografia das credenciais de IA;
-5. Next.js.
+A ordem de startup é:
+1. PostgreSQL fica saudável;
+2. o serviço one-shot `migrate` executa `prisma migrate deploy`;
+3. somente após sucesso da migration o app inicia;
+4. o app valida o ambiente;
+5. executa backfill de hashes de API key;
+6. executa backfill de criptografia das credenciais de IA;
+7. inicia o Next.js.
+
+O Prisma CLI fica fora da imagem de runtime que atende tráfego.
 
 ## 8. Restore
 
