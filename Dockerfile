@@ -28,7 +28,9 @@ CMD ["npm", "run", "db:migrate:deploy"]
 
 FROM base AS prod-deps
 COPY package.json package-lock.json ./
-RUN npm ci --omit=dev --omit=peer && npm cache clean --force
+RUN npm ci --omit=dev --omit=peer \
+    && npm uninstall --no-save prisma \
+    && npm cache clean --force
 
 FROM base AS runner
 ENV NODE_ENV=production
