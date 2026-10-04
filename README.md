@@ -27,6 +27,90 @@
 * ♻️ Regeneração segura de API Key (token exibido apenas no momento da criação/regeneração)
 * 💻 Extensão VS Code para buscar e salvar consultas direto no editor
 
+## Quick Start com Docker
+
+O caminho mais simples para experimentar o SQL Vault é subir a aplicação e o PostgreSQL pelo Docker Compose.
+
+**Pré-requisitos:**
+- Git
+- Docker + Docker Compose
+- Node.js 22 LTS apenas para gerar o secret pelo comando abaixo
+
+```bash
+git clone https://github.com/mateusarcedev/sql-vault.git
+cd sql-vault
+cp .env.example .env
+```
+
+Gere um `AUTH_SECRET` local e copie o valor para `AUTH_SECRET=""` no arquivo `.env`:
+
+```bash
+node -e "console.log(require('crypto').randomBytes(32).toString('base64'))"
+```
+
+Suba a aplicação:
+
+```bash
+docker compose up --build -d
+docker compose ps
+```
+
+Quando os serviços `sql-vault` e `sql-vault-db` aparecerem como **healthy**, abra:
+
+```text
+http://localhost:3000
+```
+
+### Demo opcional
+
+Para preencher o projeto com dados inteiramente fictícios:
+
+```bash
+docker compose exec -e ALLOW_DEMO_SEED=true app npm run db:seed:demo
+```
+
+Login demo:
+
+```text
+E-mail: demo@sqlvault.local
+Senha:  DemoVault2026!
+```
+
+O seed é **opt-in e idempotente**. Ele não cria API Keys, chaves de provedores de IA, connection strings externas, dados pessoais ou schemas corporativos.
+
+### Operação básica
+
+Acompanhar logs da aplicação:
+
+```bash
+docker compose logs -f app
+```
+
+Parar os containers:
+
+```bash
+docker compose down
+```
+
+O PostgreSQL persiste os dados no volume `sql_vault_postgres_data`. O comando `docker compose down` preserva esse volume; use `docker compose down -v` somente quando quiser apagar também os dados locais.
+
+## Desenvolvimento local
+
+Para desenvolver com o Next.js rodando no host e apenas o PostgreSQL no Docker:
+
+```bash
+cp .env.example .env
+docker compose up -d db
+npm ci
+npm run prisma:generate
+npm run db:migrate:deploy
+npm run dev
+```
+
+Acesse `http://localhost:3000`.
+
+> **Nota de migração:** versões anteriores usavam SQLite (`prisma/dev.db`). O PostgreSQL possui uma migration baseline própria; arquivos SQLite antigos não são importados automaticamente.
+
 ## Capturas de Tela
 
 <img src="public/screenshots/dashboard.png" alt="Dashboard com métricas" width="700" />
@@ -93,29 +177,6 @@
 | shadcn/ui | Biblioteca de componentes acessíveis e personalizáveis baseada em Radix UI. |
 | Tailwind CSS | Framework utility-first para estilização rápida diretamente nos componentes React. |
 | Monaco Editor | Editor que alimenta os campos de entrada SQL com destaque avançado de sintaxe e autocomplete. |
-
-## Como Começar
-
-**Pré-requisitos:**
-- Node.js 22 LTS (>=22.12 <23)
-- npm
-- Docker + Docker Compose
-
-**Instalação:**
-```bash
-git clone https://github.com/mateusarcedev/sql-vault.git
-cd sql-vault
-cp .env.example .env
-# Edite o arquivo .env: preencha AUTH_SECRET usando: openssl rand -base64 32
-docker compose up -d db
-npm install
-npx prisma migrate dev
-npm run dev
-```
-
-Acesse `http://localhost:3000`, crie sua conta e comece a usar.
-
-> **Nota de migração:** versões anteriores usavam SQLite (`prisma/dev.db`). O novo PostgreSQL usa uma migration baseline própria; dados existentes em arquivos SQLite não são importados automaticamente.
 
 ## Extensão VS Code
 
