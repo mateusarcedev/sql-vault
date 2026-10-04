@@ -21,6 +21,22 @@ services:
       retries: 10
     restart: unless-stopped
 
+  migrate:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: migrator
+    image: sql-vault-migrator:local
+    container_name: sql-vault-migrate
+    env_file:
+      - .env
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: ${DOCKER_DATABASE_URL:-postgresql://sqlvault:sqlvault@db:5432/sqlvault?schema=public}
+    restart: "no"
+
   app:
     build:
       context: .
@@ -31,8 +47,8 @@ services:
     env_file:
       - .env
     depends_on:
-      db:
-        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
     ports:
       - "3000:3000"
     environment:
