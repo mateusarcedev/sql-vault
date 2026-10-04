@@ -43,11 +43,11 @@ export function decryptAISecret(
   if (!isEncryptedAISecret(value)) return value
 
   const parts = value.split(":")
-  if (parts.length !== 6 || `${parts[0]}:${parts[1]}` !== PREFIX) {
+  if (parts.length !== 5 || `${parts[0]}:${parts[1]}` !== PREFIX) {
     throw new Error("Invalid encrypted AI secret format")
   }
 
-  const [, , , ivBase64, tagBase64, encryptedBase64] = parts
+  const [, , ivBase64, tagBase64, encryptedBase64] = parts
   const key = getAIEncryptionKey()
   const decipher = createDecipheriv(
     "aes-256-gcm",
