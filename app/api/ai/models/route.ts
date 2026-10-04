@@ -1,6 +1,8 @@
 import { auth } from '@/auth'
 import db from '@/lib/db'
 import { NextResponse } from 'next/server'
+import { decryptAISecret } from '@/lib/ai/secrets'
+import { getServerEnv } from '@/lib/env'
 
 const MODELS_CACHE_TTL_MS = 60_000
 const modelsCache = new Map<string, { expiresAt: number; models: string[] }>()
@@ -133,7 +135,7 @@ export const GET = async (req: Request) => {
     }
 
     if (provider === 'ollama') {
-      const baseUrl = process.env.OLLAMA_BASE_URL
+      const baseUrl = getServerEnv().OLLAMA_BASE_URL
       if (!baseUrl) {
         return NextResponse.json({ models: [] })
       }
@@ -172,6 +174,10 @@ export const GET = async (req: Request) => {
       },
     })
 
+    const openaiApiKey = decryptAISecret(openaiApiKey)
+    const anthropicApiKey = decryptAISecret(anthropicApiKey)
+    const geminiApiKey = decryptAISecret(geminiApiKey)
+
     let models: string[] = []
     const cacheSuffix =
       provider === 'openai-compatible' || provider === 'ollama-compatible' || provider === 'open-webui'
@@ -185,24 +191,24 @@ export const GET = async (req: Request) => {
       return NextResponse.json({ models: cached.models, cached: true })
     }
 
-    if (provider === 'openai' && config?.openaiApiKey) {
-      models = await fetchOpenAIModels(config.openaiApiKey)
+    if (provider === 'openai' && openaiApiKey) {
+      models = await fetchOpenAIModels(openaiApiKey)
     }
 
-    if (provider === 'anthropic' && config?.anthropicApiKey) {
-      models = await fetchAnthropicModels(config.anthropicApiKey)
+    if (provider === 'anthropic' && anthropicApiKey) {
+      models = await fetchAnthropicModels(anthropicApiKey)
     }
 
-    if (provider === 'gemini' && config?.geminiApiKey) {
-      models = await fetchGeminiModels(config.geminiApiKey)
+    if (provider === 'gemini' && geminiApiKey) {
+      models = await fetchGeminiModels(geminiApiKey)
     }
 
     if (provider === 'openai-compatible' && config?.modelsUrl) {
-      models = await fetchCustomModels(config.modelsUrl, config.openaiApiKey)
+      models = await fetchCustomModels(config.modelsUrl, openaiApiKey)
     }
 
     if (provider === 'open-webui' && config?.modelsUrl) {
-      models = await fetchCustomModels(config.modelsUrl, config.openaiApiKey)
+      models = await fetchCustomModels(config.modelsUrl, openaiApiKey)
     }
 
     if (provider === 'ollama-compatible' && config?.modelsUrl) {
