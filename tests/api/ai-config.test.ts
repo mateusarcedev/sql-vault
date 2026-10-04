@@ -12,9 +12,9 @@ const AI_KEY = Buffer.from('0123456789abcdef0123456789abcdef').toString('base64'
 describe('AI Config API', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    process.env.DATABASE_URL = 'postgresql://user:pass@localhost:5432/sqlvault'
-    process.env.AI_ENCRYPTION_KEY = AI_KEY
-    process.env.NODE_ENV = 'test'
+    vi.stubEnv('DATABASE_URL', 'postgresql://user:pass@localhost:5432/sqlvault')
+    vi.stubEnv('AI_ENCRYPTION_KEY', AI_KEY)
+    vi.stubEnv('NODE_ENV', 'test')
     resetServerEnvCacheForTests()
     vi.mocked(auth).mockResolvedValue({ user: { id: 'user-1' } } as any)
     vi.mocked(prisma.userAIConfig.findUnique).mockResolvedValue(null)
@@ -46,10 +46,6 @@ describe('AI Config API', () => {
   })
 
   it('encrypts new provider credentials before persistence', async () => {
-    vi.mocked(prisma.userAIConfig.upsert).mockImplementation(async (args: any) => ({
-      ...args.create,
-    }))
-
     const req = new NextRequest('http://localhost/api/ai/config', {
       method: 'PUT',
       body: JSON.stringify({
