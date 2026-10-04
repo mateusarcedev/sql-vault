@@ -11,7 +11,7 @@
   <a href="https://marketplace.visualstudio.com/items?itemName=mateusarcedev.sqlvault">
     <img src="https://img.shields.io/visual-studio-marketplace/v/mateusarcedev.sqlvault?label=VS%20Code%20Extension&logo=visualstudiocode" alt="VS Code Extension" />
   </a>
-  <p><i>Um cofre local-first para consultas SQL com versionamento, tags e integração com VS Code</i></p>
+  <p><i>Um cofre self-hosted para consultas SQL com versionamento, segurança, IA e integração com VS Code</i></p>
 </div>
 
 > Idioma: **Português (Brasil)** | [English](README.en.md)
@@ -29,6 +29,10 @@
 * 🔑 Chaves de API Pessoais para integrações externas
 * ♻️ Regeneração segura de API Key (token exibido apenas no momento da criação/regeneração)
 * 💻 Extensão VS Code para buscar e salvar consultas direto no editor
+* 🔐 Credenciais de IA criptografadas com AES-256-GCM e API Keys autenticadas por hash
+* 🐘 PostgreSQL 17 com migrations one-shot antes da aplicação iniciar
+* 🛡️ CI com lint, typecheck, testes, build, Docker, CodeQL, gitleaks e auditoria de dependências
+* 🌐 Deploy self-hosted com Caddy, HTTPS automático, backup e restore do PostgreSQL
 
 ## Quick Start com Docker
 
@@ -60,7 +64,7 @@ docker compose up --build -d
 docker compose ps
 ```
 
-Quando os serviços `sql-vault` e `sql-vault-db` aparecerem como **healthy**, abra:
+O Compose executa primeiro o serviço one-shot `sql-vault-migrate`. Quando ele terminar com sucesso e os serviços `sql-vault` e `sql-vault-db` aparecerem como **healthy**, abra:
 
 ```text
 http://localhost:3000
@@ -173,7 +177,7 @@ Acesse `http://localhost:3000`.
 | --- | --- |
 | Next.js 16 (App Router) | Framework para construir a aplicação React com rotas de API e segregação entre server e client components. |
 | TypeScript | Garante tipagem forte em toda a aplicação, prevenindo erros em tempo de execução e impondo limites contratuais. |
-| Prisma | ORM type-safe usado para interagir com o banco de dados, lidar com migrations e gerar definições de schema. |
+| Prisma | ORM type-safe para acesso ao PostgreSQL e geração do client; o CLI de migrations roda em um container one-shot separado do runtime da aplicação. |
 | PostgreSQL 17 | Banco relacional principal da aplicação, executado localmente via Docker Compose. |
 | NextAuth v5 | Gerencia sessões de autenticação nativamente usando cookies seguros e bcrypt. |
 | next-intl | Internacionalização com rotas por locale e mensagens em pt-BR/en. |
@@ -213,6 +217,23 @@ Disponível no [VS Code Marketplace](https://marketplace.visualstudio.com/items?
 ├── lib/          - Funções utilitárias centrais, helpers e singletons do sistema.
 └── prisma/       - Definições de schema e migrations do PostgreSQL.
 ```
+
+## Segurança e qualidade
+
+O projeto inclui:
+
+- autenticação com Auth.js e bcrypt;
+- API Keys autenticadas por SHA-256, com compatibilidade para migração de tokens legados;
+- credenciais OpenAI/Anthropic/Gemini criptografadas em repouso com AES-256-GCM;
+- validação centralizada das variáveis de ambiente;
+- container da aplicação executado como usuário non-root;
+- Prisma CLI isolado da imagem que atende tráfego;
+- migrations executadas em serviço one-shot antes do app;
+- CI com lint, typecheck, 132 testes, build, healthcheck Docker e validação do stack de produção;
+- CodeQL, gitleaks, Dependabot e auditoria de dependências;
+- backup e restore PostgreSQL validados em CI.
+
+Consulte também [SECURITY.md](SECURITY.md).
 
 ## Deploy em produção
 
