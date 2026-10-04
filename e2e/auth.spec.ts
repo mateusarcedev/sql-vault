@@ -61,6 +61,6 @@ test.describe("authentication", () => {
     await page.locator("button:has(svg.lucide-log-out)").click()
 
     await expect(page).toHaveURL(/\/en\/login$/)
-    await expect(page.getByRole("heading", { name: "Login" })).toBeVisible()
+    await expect(page.getByText("Enter your email and password to login", { exact: true })).toBeVisible()
   })
 })
