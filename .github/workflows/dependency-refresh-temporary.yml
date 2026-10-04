@@ -43,8 +43,8 @@ jobs:
           npm test
           npm run build
 
-      - name: Require clean runtime high/critical audit
-        run: npm audit --omit=dev --audit-level=high
+      - name: Validate strict audit allowlist
+        run: node scripts/check-audit.mjs
 
       - name: Commit refreshed lockfile
         run: |
