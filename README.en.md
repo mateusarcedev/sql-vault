@@ -11,7 +11,7 @@
   <a href="https://marketplace.visualstudio.com/items?itemName=mateusarcedev.sqlvault">
     <img src="https://img.shields.io/visual-studio-marketplace/v/mateusarcedev.sqlvault?label=VS%20Code%20Extension&logo=visualstudiocode" alt="VS Code Extension" />
   </a>
-  <p><i>A local-first vault for SQL queries with versioning, tags, and VS Code integration</i></p>
+  <p><i>A self-hosted SQL vault with versioning, security, AI, and VS Code integration</i></p>
 </div>
 
 > Language: **English** | [Português (Brasil)](README.md)
@@ -29,6 +29,10 @@
 * 🔑 Personal API keys for external integrations
 * ♻️ Secure API key regeneration (raw token shown only at create/regenerate time)
 * 💻 VS Code extension to search and save queries from the editor
+* 🔐 AES-256-GCM encryption for AI credentials and hashed API Key authentication
+* 🐘 PostgreSQL 17 with one-shot migrations before application startup
+* 🛡️ CI with lint, typecheck, tests, build, Docker, CodeQL, gitleaks, and dependency auditing
+* 🌐 Self-hosted deployment with Caddy, automatic HTTPS, PostgreSQL backup and restore
 
 ## Docker Quick Start
 
@@ -60,7 +64,7 @@ docker compose up --build -d
 docker compose ps
 ```
 
-When both `sql-vault` and `sql-vault-db` are **healthy**, open:
+Compose first runs the one-shot `sql-vault-migrate` service. Once it completes successfully and both `sql-vault` and `sql-vault-db` are **healthy**, open:
 
 ```text
 http://localhost:3000
@@ -173,7 +177,7 @@ Open `http://localhost:3000`.
 | --- | --- |
 | Next.js 16 (App Router) | Framework to build the React app with API routes and server/client component boundaries. |
 | TypeScript | Strong typing across the app for safer contracts and fewer runtime errors. |
-| Prisma | Type-safe ORM for database access, migrations, and schema generation. |
+| Prisma | Type-safe ORM for PostgreSQL access and client generation; the migration CLI runs in a one-shot container separate from the application runtime. |
 | PostgreSQL 17 | Primary relational database, run locally through Docker Compose. |
 | NextAuth v5 | Auth/session management with secure cookies and bcrypt password verification. |
 | next-intl | Internationalization with locale-based routing and pt-BR/en message catalogs. |
@@ -213,6 +217,23 @@ Available on [VS Code Marketplace](https://marketplace.visualstudio.com/items?it
 ├── lib/          - Core helpers, utilities, and system singletons.
 └── prisma/       - PostgreSQL schema definitions and migrations.
 ```
+
+## Security and quality
+
+The project includes:
+
+- Auth.js authentication with bcrypt;
+- SHA-256 API Key authentication with legacy-token migration compatibility;
+- AES-256-GCM encryption at rest for OpenAI/Anthropic/Gemini credentials;
+- centralized environment validation;
+- non-root application container;
+- Prisma CLI isolated from the traffic-serving runtime image;
+- one-shot migrations before the application starts;
+- CI with lint, typecheck, 132 tests, build, Docker health checks, and production-stack validation;
+- CodeQL, gitleaks, Dependabot, and dependency auditing;
+- PostgreSQL backup and restore validated in CI.
+
+See [SECURITY.md](SECURITY.md) for the security policy.
 
 ## Production deployment
 
