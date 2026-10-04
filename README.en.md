@@ -31,7 +31,7 @@
 * 💻 VS Code extension to search and save queries from the editor
 * 🔐 AES-256-GCM encryption for AI credentials and hashed API Key authentication
 * 🐘 PostgreSQL 17 with one-shot migrations before application startup
-* 🛡️ CI with lint, typecheck, tests, build, Docker, CodeQL, gitleaks, and dependency auditing
+* 🛡️ CI with lint, typecheck, unit/API tests, Playwright E2E, build, Docker, CodeQL, gitleaks, and dependency auditing
 * 🌐 Self-hosted deployment with Caddy, automatic HTTPS, PostgreSQL backup and restore
 
 ## Docker Quick Start
@@ -229,7 +229,7 @@ The project includes:
 - non-root application container;
 - Prisma CLI isolated from the traffic-serving runtime image;
 - one-shot migrations before the application starts;
-- CI with lint, typecheck, 132 tests, build, Docker health checks, and production-stack validation;
+- CI with lint, typecheck, **132 unit/API tests + 8 Playwright E2E scenarios**, build, Docker health checks, and production-stack validation;
 - CodeQL, gitleaks, Dependabot, and dependency auditing;
 - PostgreSQL backup and restore validated in CI.
 
