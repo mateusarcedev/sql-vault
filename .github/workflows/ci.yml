@@ -437,7 +437,7 @@ jobs:
           NODE
 
       - name: Build production image
-        run: docker compose --env-file .env.production -f docker-compose.prod.yml build app
+        run: docker compose --env-file .env.production -f docker-compose.prod.yml build app migrate
 
       - name: Start production stack
         run: docker compose --env-file .env.production -f docker-compose.prod.yml up -d
