@@ -193,14 +193,16 @@ Single source for API key resolution: `lib/auth-api-key.ts` (`getUserFromApiKey`
 | Variable | Required | Description |
 | --- | --- | --- |
 | `DATABASE_URL` | Yes | PostgreSQL URL (e.g. `postgresql://sqlvault:sqlvault@localhost:5432/sqlvault?schema=public`) |
-| `AUTH_SECRET` | Yes | NextAuth secret (`openssl rand -base64 32`) |
+| `AUTH_SECRET` | Yes | NextAuth secret; at least 32 characters in production. |
 | `NEXTAUTH_URL` | Prod yes | Base URL (e.g. `http://localhost:3000`) |
+| `AI_ENCRYPTION_KEY` | Prod yes | Base64-encoded 32-byte key for AES-256-GCM AI credential encryption. |
 
 `.env.example` starter:
 
 ```env
 DATABASE_URL="postgresql://sqlvault:sqlvault@localhost:5432/sqlvault?schema=public"
 AUTH_SECRET=""
+AI_ENCRYPTION_KEY=""
 NEXTAUTH_URL="http://localhost:3000"
 ```
 
