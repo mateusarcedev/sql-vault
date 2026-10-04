@@ -382,6 +382,19 @@ jobs:
     name: Production stack
     runs-on: ubuntu-latest
     needs: container-health
+    env:
+      SQLVAULT_DOMAIN: http://localhost
+      ACME_EMAIL: ci@example.com
+      POSTGRES_USER: sqlvault
+      POSTGRES_PASSWORD: ci-postgres-password
+      POSTGRES_DB: sqlvault
+      DATABASE_URL: postgresql://sqlvault:ci-postgres-password@db:5432/sqlvault?schema=public
+      NEXTAUTH_URL: http://localhost
+      AUTH_SECRET: ci-production-auth-secret-with-at-least-32-characters
+      AUTH_TRUST_HOST: "true"
+      AI_ENCRYPTION_KEY: MDEyMzQ1Njc4OWFiY2RlZjAxMjM0NTY3ODlhYmNkZWY=
+      OLLAMA_BASE_URL: ""
+      ALLOW_DEMO_SEED: "false"
 
     steps:
       - name: Checkout
