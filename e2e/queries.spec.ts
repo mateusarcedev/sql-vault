@@ -26,7 +26,7 @@ test("creates a SQL query through the UI and finds it via search", async ({ page
   await expect(page).toHaveURL(/\/en\/consultas$/)
   await expect(page.getByText(title, { exact: true })).toBeVisible()
 
-  await page.getByPlaceholder("Search queries...").fill(title)
+  await page.getByPlaceholder("Search...").fill(title)
 
   await expect(page.getByText(title, { exact: true })).toBeVisible()
   await expect(page.getByText("1 query found", { exact: true })).toBeVisible()
