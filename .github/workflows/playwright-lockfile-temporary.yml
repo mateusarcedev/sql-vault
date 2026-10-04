@@ -1,0 +1,39 @@
+name: Playwright lockfile temporary
+
+on:
+  push:
+    branches:
+      - test/playwright-e2e
+
+permissions:
+  contents: write
+
+jobs:
+  lockfile:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          ref: test/playwright-e2e
+
+      - name: Setup Node
+        uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+
+      - name: Refresh package lock
+        run: npm install --package-lock-only
+
+      - name: Validate dependency graph
+        run: npm ci
+
+      - name: Commit lockfile
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add package-lock.json
+          git commit -m "chore: add playwright to package lock" || exit 0
+          git push
