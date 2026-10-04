@@ -1,4 +1,26 @@
 services:
+  db:
+    image: postgres:17-alpine
+    container_name: sql-vault-db
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-sqlvault}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-sqlvault}
+      POSTGRES_DB: ${POSTGRES_DB:-sqlvault}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - sql_vault_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -U ${POSTGRES_USER:-sqlvault} -d ${POSTGRES_DB:-sqlvault}"
+        ]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
   app:
     build:
       context: .
@@ -8,6 +30,9 @@ services:
     container_name: sql-vault
     env_file:
       - .env
+    depends_on:
+      db:
+        condition: service_healthy
     ports:
       - "3000:3000"
     environment:
@@ -15,9 +40,7 @@ services:
       NEXTAUTH_URL: ${NEXTAUTH_URL:-http://localhost:3000}
       AUTH_SECRET: ${AUTH_SECRET}
       AUTH_TRUST_HOST: ${AUTH_TRUST_HOST:-true}
-      DATABASE_URL: ${DOCKER_DATABASE_URL:-file:/data/dev.db}
-    volumes:
-      - sql_vault_data:/data
+      DATABASE_URL: ${DOCKER_DATABASE_URL:-postgresql://sqlvault:sqlvault@db:5432/sqlvault?schema=public}
     healthcheck:
       test:
         [
@@ -33,4 +56,4 @@ services:
     restart: unless-stopped
 
 volumes:
-  sql_vault_data:
+  sql_vault_postgres_data:

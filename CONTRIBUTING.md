@@ -18,9 +18,10 @@ Antes de iniciar qualquer tarefa, leia atentamente o arquivo [ARCHITECTURE.md](f
 3.  **Configuração de Variáveis de Ambiente**:
     - Copie o arquivo `.env.example` para `.env`.
     - Gere um secret para o NextAuth: `openssl rand -base64 32`.
-    - Certifique-se de que o `DATABASE_URL` aponta para seu arquivo SQLite local.
+    - Certifique-se de que o `DATABASE_URL` aponta para o PostgreSQL local definido no `.env`.
 4.  **Banco de Dados**:
     ```bash
+    docker compose up -d db
     npx prisma migrate dev
     ```
 5.  **Inicie o Servidor**:

@@ -11,7 +11,7 @@ SQL Vault é um sistema local-first projetado para desenvolvedores, analistas de
 * **Next.js 16 (App Router)**: Framework para construir a aplicação React. Fornece capacidades full-stack integradas com rotas de API e segregação entre server components e client components.
 * **TypeScript**: Garante tipagem forte em toda a aplicação, prevenindo erros em tempo de execução e impondo limites contratuais.
 * **Prisma**: ORM type-safe usado para interagir com o banco de dados, lidar com migrations e gerar definições estritas de schema em TypeScript.
-* **SQLite**: Banco local principal. Escolhido pela persistência local sem configuração, combinando perfeitamente com a natureza local-first do SQL Vault.
+* **PostgreSQL 17**: Banco relacional principal. No desenvolvimento local é executado via Docker Compose e acessado pelo Prisma através do driver `pg`.
 * **NextAuth v5 (Auth.js)**: Gerencia sessões de autenticação nativamente no Next.js usando cookies HTTP-only seguros e bcrypt para hash de senhas.
 * **next-intl**: Internacionalização com rotas por locale (`/en`, `/pt-BR`) e catálogos de mensagens por idioma.
 * **TanStack Query**: Biblioteca de busca de dados para gerenciar estado remoto, cache, atualizações em background e invalidação no frontend.
@@ -30,7 +30,7 @@ SQL Vault é um sistema local-first projetado para desenvolvedores, analistas de
 * `store/`: Slices globais do Zustand. Organizadas por domínio de negócio (`query-store.ts`, `routine-store.ts`, `ui-store.ts`).
 * `types/`: Definições globais de TypeScript, aliases de tipos e interfaces amplamente reutilizadas.
 * `lib/`: Funções utilitárias centrais, helpers reutilizáveis e singletons do sistema (ex.: instanciador do Prisma client `db.ts`, helper de auth de API key `auth-api-key.ts`).
-* `prisma/`: Definições do schema do banco (`schema.prisma`), migrations e arquivo SQLite (`dev.db`).
+* `prisma/`: Definições do schema do banco (`schema.prisma`) e migrations PostgreSQL.
 
 ## 4. Schema do banco de dados
 
@@ -239,14 +239,14 @@ Arquivo `.env` obrigatório na raiz do projeto. Nunca commitar este arquivo.
 
 | Variável | Obrigatória | Descrição |
 | :--- | :--- | :--- |
-| `DATABASE_URL` | Sim | Path do SQLite. Ex: `file:./prisma/dev.db` |
+| `DATABASE_URL` | Sim | URL PostgreSQL. Ex: `postgresql://sqlvault:sqlvault@localhost:5432/sqlvault?schema=public` |
 | `AUTH_SECRET` | Sim | Secret do NextAuth. Gerar com: `openssl rand -base64 32` |
 | `NEXTAUTH_URL` | Sim (prod) | URL base da aplicação. Ex: `http://localhost:3000` |
 
 Copiar `.env.example` como ponto de partida:
 
 ```
-DATABASE_URL="file:./prisma/dev.db"
+DATABASE_URL="postgresql://sqlvault:sqlvault@localhost:5432/sqlvault?schema=public"
 AUTH_SECRET=""
 NEXTAUTH_URL="http://localhost:3000"
 ```

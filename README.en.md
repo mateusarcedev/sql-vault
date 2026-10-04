@@ -85,7 +85,7 @@
 | Next.js 16 (App Router) | Framework to build the React app with API routes and server/client component boundaries. |
 | TypeScript | Strong typing across the app for safer contracts and fewer runtime errors. |
 | Prisma | Type-safe ORM for database access, migrations, and schema generation. |
-| SQLite | Primary local database for zero-config persistence. |
+| PostgreSQL 17 | Primary relational database, run locally through Docker Compose. |
 | NextAuth v5 | Auth/session management with secure cookies and bcrypt password verification. |
 | next-intl | Internationalization with locale-based routing and pt-BR/en message catalogs. |
 | TanStack Query | Remote state, caching, background refetch, and cache invalidation. |
@@ -99,6 +99,7 @@
 **Requirements:**
 - Node.js 22 LTS (>=22.12 <23)
 - npm
+- Docker + Docker Compose
 
 **Install:**
 ```bash
@@ -106,12 +107,15 @@ git clone https://github.com/mateusarcedev/sql-vault.git
 cd sql-vault
 cp .env.example .env
 # Edit .env and set AUTH_SECRET with: openssl rand -base64 32
+docker compose up -d db
 npm install
 npx prisma migrate dev
 npm run dev
 ```
 
 Open `http://localhost:3000`, create your account, and start using it.
+
+> **Migration note:** previous versions used SQLite (`prisma/dev.db`). PostgreSQL now has its own migration baseline; existing SQLite data is not imported automatically.
 
 ## VS Code Extension
 
@@ -141,7 +145,7 @@ Available on [VS Code Marketplace](https://marketplace.visualstudio.com/items?it
 ├── store/        - Zustand domain stores (query, routine, ui).
 ├── types/        - Global TypeScript types and interfaces.
 ├── lib/          - Core helpers, utilities, and system singletons.
-└── prisma/       - Schema definitions, migrations, and SQLite database.
+└── prisma/       - PostgreSQL schema definitions and migrations.
 ```
 
 ## Contributing

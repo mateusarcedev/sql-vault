@@ -85,7 +85,7 @@
 | Next.js 16 (App Router) | Framework para construir a aplicação React com rotas de API e segregação entre server e client components. |
 | TypeScript | Garante tipagem forte em toda a aplicação, prevenindo erros em tempo de execução e impondo limites contratuais. |
 | Prisma | ORM type-safe usado para interagir com o banco de dados, lidar com migrations e gerar definições de schema. |
-| SQLite | Banco local principal para persistência sem configuração. |
+| PostgreSQL 17 | Banco relacional principal da aplicação, executado localmente via Docker Compose. |
 | NextAuth v5 | Gerencia sessões de autenticação nativamente usando cookies seguros e bcrypt. |
 | next-intl | Internacionalização com rotas por locale e mensagens em pt-BR/en. |
 | TanStack Query | Biblioteca de busca de dados para gerenciar estado remoto, cache, atualizações em background e invalidação no frontend. |
@@ -99,6 +99,7 @@
 **Pré-requisitos:**
 - Node.js 22 LTS (>=22.12 <23)
 - npm
+- Docker + Docker Compose
 
 **Instalação:**
 ```bash
@@ -106,12 +107,15 @@ git clone https://github.com/mateusarcedev/sql-vault.git
 cd sql-vault
 cp .env.example .env
 # Edite o arquivo .env: preencha AUTH_SECRET usando: openssl rand -base64 32
+docker compose up -d db
 npm install
 npx prisma migrate dev
 npm run dev
 ```
 
 Acesse `http://localhost:3000`, crie sua conta e comece a usar.
+
+> **Nota de migração:** versões anteriores usavam SQLite (`prisma/dev.db`). O novo PostgreSQL usa uma migration baseline própria; dados existentes em arquivos SQLite não são importados automaticamente.
 
 ## Extensão VS Code
 
@@ -141,7 +145,7 @@ Disponível no [VS Code Marketplace](https://marketplace.visualstudio.com/items?
 ├── store/        - Slices globais do Zustand agrupados por domínio (query, routine, ui).
 ├── types/        - Definições globais de TypeScript, aliases e interfaces.
 ├── lib/          - Funções utilitárias centrais, helpers e singletons do sistema.
-└── prisma/       - Definições de schema, migrations e arquivo do banco de dados SQLite.
+└── prisma/       - Definições de schema e migrations do PostgreSQL.
 ```
 
 ## Contribuindo
