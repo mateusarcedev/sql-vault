@@ -1,68 +1,112 @@
 # Contribuindo para o SQL Vault
 
-Obrigado por seu interesse em contribuir para o SQL Vault! Este documento serve como guia para configurar seu ambiente de desenvolvimento e garantir que suas contribuições estejam alinhadas com as decisões arquiteturais do projeto.
+Obrigado por seu interesse em contribuir para o SQL Vault.
 
-## 📜 Regra de Ouro
-Antes de iniciar qualquer tarefa, leia atentamente o arquivo [ARCHITECTURE.md](file:///Users/mateusarce/projetos/sql-vault/ARCHITECTURE.md). Ele contém as regras invioláveis de ownership, segurança e padrões de código que devem ser seguidos rigorosamente.
+> Idioma: **Português (Brasil)** | [English](CONTRIBUTING.en.md)
 
----
+Antes de começar, leia [ARCHITECTURE.md](ARCHITECTURE.md). Ele contém as regras arquiteturais e de segurança que devem ser preservadas.
 
-## 🚀 Como começar
+## Como começar
 
-### 1. Configuração do Ambiente
-1.  **Clone o repositório**
-2.  **Instale as dependências**:
-    ```bash
-    npm install
-    ```
-3.  **Configuração de Variáveis de Ambiente**:
-    - Copie o arquivo `.env.example` para `.env`.
-    - Gere um secret para o NextAuth: `openssl rand -base64 32`.
-    - Certifique-se de que o `DATABASE_URL` aponta para o PostgreSQL local definido no `.env`.
-4.  **Banco de Dados**:
-    ```bash
-    docker compose up -d db
-    npx prisma migrate dev
-    ```
-5.  **Inicie o Servidor**:
-    ```bash
-    npm run dev
-    ```
-Acesse `http://localhost:3000` para ver a aplicação rodando.
+### 1. Pré-requisitos
 
----
+- Node.js 22 LTS
+- npm
+- Docker + Docker Compose
+- Git
 
-## 🛠 Padrões de Desenvolvimento
+### 2. Clone e configuração
 
-### 1. Backend e API
-- **Ownership**: Todas as consultas ao banco de dados (Prisma) *devem* filtrar pelo `userId` do usuário autenticado. Nunca confie apenas no ID do recurso.
-- **Handlers**: Use o helper `getUserFromApiKey` ou a sessão do NextAuth no início de cada rota para identificar o usuário.
-- **Soft Delete**: Não use `delete` no Prisma para Queries e Routines. Atualize o campo `deletedAt`.
-- **Versionamento**: Ao editar o campo `sql`, certifique-se de disparar a criação de uma `QueryVersion` ou `RoutineVersion` com o conteúdo anterior.
+```bash
+git clone https://github.com/mateusarcedev/sql-vault.git
+cd sql-vault
+cp .env.example .env
+npm ci
+```
 
-### 2. Frontend e UI
-- **Componentes**: Verifique a pasta `components/` antes de criar um novo elemento. Use `DatabaseBadge`, `TagChip`, `EmptyState` e `Skeleton*` para manter a consistência visual.
-- **Estado**: 
-  - Estado de UI/Global: **Zustand** (`store/`).
-  - Cache/Dados Remotos: **TanStack Query**.
-- **UX**: A abertura de Drawers e Modais complexos deve ser controlada via query params (`?drawer=new`, etc.) para permitir deep-linking.
+Gere `AUTH_SECRET` e `AI_ENCRYPTION_KEY`:
 
-### 3. Design Tokens
-Siga a paleta de cores definida no `ARCHITECTURE.md`. Use as classes do Tailwind que apontam para as variáveis de tema zinc/slate configuradas.
+```bash
+node -e "const c=require('crypto'); console.log('AUTH_SECRET='+c.randomBytes(32).toString('base64')); console.log('AI_ENCRYPTION_KEY='+c.randomBytes(32).toString('base64'))"
+```
 
----
+Copie os valores para `.env`.
 
-## 📋 Checklist de Pull Request
-Antes de abrir um PR, verifique se:
-- [ ] O código compila sem erros de TypeScript (`npm run build`).
-- [ ] Não há `console.log` ou comentários de debug.
-- [ ] Novas rotas de API foram documentadas ou seguem os padrões existentes.
-- [ ] O ownership do dado é verificado em cada transação.
-- [ ] As regras de persistência (como serialização de parâmetros em Routines) foram respeitadas.
+### 3. Banco de dados
 
-## 🔌 VS Code Extension
-Se estiver contribuindo para a extensão (pasta `sqlvault-vscode`), lembre-se que ela é um projeto standalone. Use apenas módulos nativos do Node.js (`http`/`https`) para manter o cliente leve e sem dependências de terceiros.
+```bash
+docker compose up -d db
+npm run prisma:generate
+npm run db:migrate:deploy
+```
 
----
+### 4. Desenvolvimento
 
-Precisa de ajuda? Consulte o `ARCHITECTURE.md` ou abra uma issue detalhando sua dúvida!
+```bash
+npm run dev
+```
+
+A aplicação fica disponível em `http://localhost:3000`.
+
+## Padrões de desenvolvimento
+
+### Backend e API
+
+- **Ownership:** toda leitura/escrita de dados de usuário deve respeitar `userId`.
+- **Autenticação:** use a sessão Auth.js ou `getUserFromApiKey` conforme o contrato da rota.
+- **Soft delete:** Queries e Routines usam `deletedAt`; não faça hard-delete nesses modelos.
+- **Versionamento:** mudanças em `sql` devem preservar a versão anterior.
+- **Segredos:** nunca retorne password, token bruto persistido ou credenciais de IA.
+- **Migrations:** mudanças de schema devem ser feitas via migration incremental e testável.
+
+### Frontend
+
+- reutilize componentes existentes antes de criar novos;
+- use Zustand para estado global de UI;
+- use TanStack Query para dados remotos;
+- preserve os padrões de drawers/modais controlados por query params;
+- siga os tokens definidos em `ARCHITECTURE.md`.
+
+## Validação antes do PR
+
+Execute:
+
+```bash
+npm run lint
+npm run typecheck
+npm test
+npm run build
+```
+
+Se a mudança afetar banco ou Docker, valide também:
+
+```bash
+npm run prisma:generate
+npm run db:migrate:deploy
+docker compose build
+```
+
+## Checklist de Pull Request
+
+- [ ] O escopo está limitado e descrito claramente.
+- [ ] Lint passou.
+- [ ] Typecheck passou.
+- [ ] Testes passaram.
+- [ ] Build passou.
+- [ ] Novas rotas ou regras foram testadas.
+- [ ] Ownership e autenticação foram revisados.
+- [ ] Nenhum segredo, `.env`, dump ou artefato gerado foi commitado.
+- [ ] Documentação PT/EN foi atualizada quando aplicável.
+- [ ] Migrations são compatíveis com o fluxo de deploy.
+
+## Segurança
+
+Não abra issue pública para vulnerabilidades. Consulte [SECURITY.md](SECURITY.md).
+
+## Extensão VS Code
+
+A extensão é mantida em repositório separado e usa API Keys para autenticação. Mudanças específicas da extensão devem ser feitas no repositório correspondente.
+
+## Ajuda
+
+Abra uma issue para bugs, melhorias ou dúvidas de contribuição que não envolvam informações de segurança sensíveis.
