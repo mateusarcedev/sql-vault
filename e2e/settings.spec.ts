@@ -16,8 +16,8 @@ test("creates an API key and only exposes the raw token in the one-time dialog",
 
   await expect(page.getByRole("dialog").getByText("API Key Created!", { exact: true })).toBeVisible()
 
-  const tokenInput = page.getByRole("dialog").locator("input").filter({ hasValue: /^[a-f0-9]{64}$/ })
-  await expect(tokenInput).toHaveCount(1)
+  const tokenInput = page.getByRole("dialog").locator("input").first()
+  await expect(tokenInput).toHaveValue(/^[a-f0-9]{64}$/)
   const token = await tokenInput.inputValue()
   expect(token).toMatch(/^[a-f0-9]{64}$/)
 
