@@ -38,6 +38,7 @@ COPY --from=builder /app/messages ./messages
 COPY --from=builder /app/i18n ./i18n
 COPY --from=builder /app/lib ./lib
 COPY --from=builder /app/app ./app
+COPY --from=builder /app/scripts ./scripts
 
 EXPOSE 3000
 

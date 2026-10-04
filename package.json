@@ -12,7 +12,8 @@
     "test:coverage": "vitest run --coverage",
     "typecheck": "tsc --noEmit",
     "prisma:generate": "prisma generate",
-    "db:migrate:deploy": "prisma migrate deploy"
+    "db:migrate:deploy": "prisma migrate deploy",
+    "db:seed:demo": "node scripts/seed-demo.mjs"
   },
   "dependencies": {
     "@auth/prisma-adapter": "^2.11.1",
