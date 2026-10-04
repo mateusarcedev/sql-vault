@@ -11,7 +11,8 @@ permissions:
 
 env:
   DATABASE_URL: postgresql://sqlvault:sqlvault@localhost:5432/sqlvault?schema=public
-  AUTH_SECRET: ci-only-not-a-production-secret
+  AUTH_SECRET: ci-only-auth-secret-with-at-least-32-characters
+  AI_ENCRYPTION_KEY: MDEyMzQ1Njc4OWFiY2RlZjAxMjM0NTY3ODlhYmNkZWY=
   NEXTAUTH_URL: http://localhost:3000
 
 jobs:
@@ -50,6 +51,11 @@ jobs:
       - name: Generate Prisma Client
         run: npm run prisma:generate
 
+      - name: Validate production environment contract
+        env:
+          NODE_ENV: production
+        run: npm run env:check
+
       - name: Apply PostgreSQL migrations
         run: npm run db:migrate:deploy
 
@@ -87,6 +93,7 @@ jobs:
               'Routine_userId_isPublic_idx',
               'Routine_databaseId_idx',
               'DatabaseContext_userId_isPublic_idx',
+              'ApiKey_tokenHash_key',
             ]) {
               if (!indexNames.has(expected)) {
                 throw new Error(`Missing expected index: ${expected}`)
@@ -194,6 +201,87 @@ jobs:
           })
           NODE
 
+      - name: Validate security backfills
+        run: |
+          node <<'NODE'
+          const { Client } = require('pg')
+
+          async function main() {
+            const client = new Client({ connectionString: process.env.DATABASE_URL })
+            await client.connect()
+
+            const user = await client.query(
+              'SELECT "id" FROM "User" WHERE "email" = $1',
+              ['demo@sqlvault.local']
+            )
+            const userId = user.rows[0].id
+
+            await client.query(
+              'INSERT INTO "ApiKey" ("id", "name", "token", "tokenHash", "regeneratedAt", "createdAt", "userId") VALUES ($1, $2, $3, NULL, NOW(), NOW(), $4)',
+              ['legacy-key-ci', 'Legacy CI key', 'legacy-ci-token', userId]
+            )
+
+            await client.query(
+              'INSERT INTO "UserAIConfig" ("id", "userId", "provider", "model", "openaiApiKey", "createdAt", "updatedAt") VALUES ($1, $2, $3, $4, $5, NOW(), NOW())',
+              ['legacy-ai-ci', userId, 'openai', 'gpt-4.1', 'sk-legacy-ci-secret']
+            )
+
+            await client.end()
+          }
+
+          main().catch((error) => {
+            console.error(error)
+            process.exit(1)
+          })
+          NODE
+
+          npm run db:backfill:api-key-hashes
+          npm run db:backfill:api-key-hashes
+          npm run db:encrypt:ai-secrets
+          npm run db:encrypt:ai-secrets
+
+          node <<'NODE'
+          const { Client } = require('pg')
+          const { createHash } = require('node:crypto')
+
+          async function main() {
+            const client = new Client({ connectionString: process.env.DATABASE_URL })
+            await client.connect()
+
+            const key = await client.query(
+              'SELECT "token", "tokenHash" FROM "ApiKey" WHERE "id" = $1',
+              ['legacy-key-ci']
+            )
+            const expectedHash = createHash('sha256')
+              .update('legacy-ci-token', 'utf8')
+              .digest('hex')
+
+            if (key.rows[0].token !== 'legacy-ci-token') {
+              throw new Error('Transitional plaintext token changed unexpectedly')
+            }
+            if (key.rows[0].tokenHash !== expectedHash) {
+              throw new Error('API key hash backfill failed')
+            }
+
+            const config = await client.query(
+              'SELECT "openaiApiKey" FROM "UserAIConfig" WHERE "id" = $1',
+              ['legacy-ai-ci']
+            )
+            const stored = config.rows[0].openaiApiKey
+
+            if (stored === 'sk-legacy-ci-secret' || !stored.startsWith('enc:v1:')) {
+              throw new Error('AI credential encryption backfill failed')
+            }
+
+            await client.end()
+          }
+
+          main().catch((error) => {
+            console.error(error)
+            process.exit(1)
+          })
+          NODE
+
       - name: Lint
         run: npm run lint
 
@@ -222,7 +310,8 @@ jobs:
           POSTGRES_PASSWORD=sqlvault
           POSTGRES_DB=sqlvault
           POSTGRES_PORT=5432
-          AUTH_SECRET=ci-only-docker-secret
+          AUTH_SECRET=ci-only-docker-auth-secret-with-at-least-32-characters
+          AI_ENCRYPTION_KEY=MDEyMzQ1Njc4OWFiY2RlZjAxMjM0NTY3ODlhYmNkZWY=
           AUTH_TRUST_HOST=true
           NEXTAUTH_URL=http://localhost:3000
           DATABASE_URL=postgresql://sqlvault:sqlvault@localhost:5432/sqlvault?schema=public
@@ -259,6 +348,10 @@ jobs:
           docker compose ps
           docker compose logs --no-color
           exit 1
+
+      - name: Verify application runs as non-root
+        run: |
+          docker compose exec -T app node -e "const uid=process.getuid?.(); console.log('uid='+uid); if(uid===0) process.exit(1)"
 
       - name: Validate documented demo seed command inside container
         run: |
