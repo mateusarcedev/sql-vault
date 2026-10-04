@@ -29,7 +29,13 @@ CMD ["npm", "run", "db:migrate:deploy"]
 FROM base AS prod-deps
 COPY package.json package-lock.json ./
 RUN npm ci --omit=dev --omit=peer \
-    && npm uninstall --no-save prisma \
+    && rm -rf \
+      node_modules/prisma \
+      node_modules/@prisma/config \
+      node_modules/@prisma/dev \
+      node_modules/@prisma/studio-core \
+      node_modules/mysql2 \
+      node_modules/deepmerge-ts \
     && npm cache clean --force
 
 FROM base AS runner
