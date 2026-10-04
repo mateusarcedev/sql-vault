@@ -102,6 +102,90 @@ jobs:
           })
           NODE
 
+      - name: Validate idempotent demo seed
+        env:
+          ALLOW_DEMO_SEED: "true"
+        run: |
+          npm run db:seed:demo
+          npm run db:seed:demo
+          node <<'NODE'
+          const { Client } = require('pg')
+
+          async function main() {
+            const client = new Client({ connectionString: process.env.DATABASE_URL })
+            await client.connect()
+
+            const email = 'demo@sqlvault.local'
+            const userResult = await client.query(
+              'SELECT "id" FROM "User" WHERE "email" = $1',
+              [email]
+            )
+
+            if (userResult.rowCount !== 1) {
+              throw new Error('Demo user was not seeded exactly once')
+            }
+
+            const userId = userResult.rows[0].id
+            const expectedCounts = [
+              ['Tag', 4],
+              ['Query', 3],
+              ['Routine', 1],
+              ['DatabaseContext', 1],
+              ['QueryVersion', 2],
+              ['RoutineVersion', 1],
+            ]
+
+            for (const [table, expected] of expectedCounts) {
+              const relationColumn =
+                table === 'QueryVersion' || table === 'RoutineVersion'
+                  ? null
+                  : '"userId"'
+
+              let result
+              if (relationColumn) {
+                result = await client.query(
+                  `SELECT COUNT(*)::int AS count FROM "${table}" WHERE ${relationColumn} = $1`,
+                  [userId]
+                )
+              } else if (table === 'QueryVersion') {
+                result = await client.query(
+                  'SELECT COUNT(*)::int AS count FROM "QueryVersion" qv JOIN "Query" q ON q.id = qv."queryId" WHERE q."userId" = $1',
+                  [userId]
+                )
+              } else {
+                result = await client.query(
+                  'SELECT COUNT(*)::int AS count FROM "RoutineVersion" rv JOIN "Routine" r ON r.id = rv."routineId" WHERE r."userId" = $1',
+                  [userId]
+                )
+              }
+
+              if (result.rows[0].count !== expected) {
+                throw new Error(`${table}: expected ${expected}, got ${result.rows[0].count}`)
+              }
+            }
+
+            const apiKeys = await client.query(
+              'SELECT COUNT(*)::int AS count FROM "ApiKey" WHERE "userId" = $1',
+              [userId]
+            )
+            const aiConfig = await client.query(
+              'SELECT COUNT(*)::int AS count FROM "UserAIConfig" WHERE "userId" = $1',
+              [userId]
+            )
+
+            if (apiKeys.rows[0].count !== 0 || aiConfig.rows[0].count !== 0) {
+              throw new Error('Demo seed must not create API keys or AI provider secrets')
+            }
+
+            await client.end()
+          }
+
+          main().catch((error) => {
+            console.error(error)
+            process.exit(1)
+          })
+          NODE
+
       - name: Lint
         run: npm run lint
 
