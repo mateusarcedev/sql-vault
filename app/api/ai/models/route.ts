@@ -174,9 +174,9 @@ export const GET = async (req: Request) => {
       },
     })
 
-    const openaiApiKey = decryptAISecret(openaiApiKey)
-    const anthropicApiKey = decryptAISecret(anthropicApiKey)
-    const geminiApiKey = decryptAISecret(geminiApiKey)
+    const openaiApiKey = decryptAISecret(config?.openaiApiKey)
+    const anthropicApiKey = decryptAISecret(config?.anthropicApiKey)
+    const geminiApiKey = decryptAISecret(config?.geminiApiKey)
 
     let models: string[] = []
     const cacheSuffix =
