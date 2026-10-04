@@ -23,6 +23,24 @@ services:
     networks:
       - backend
 
+  migrate:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: migrator
+    image: sql-vault-migrator:prod
+    container_name: sql-vault-migrate
+    env_file:
+      - .env.production
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: ${DATABASE_URL:?DATABASE_URL is required}
+    restart: "no"
+    networks:
+      - backend
+
   app:
     build:
       context: .
@@ -33,8 +51,8 @@ services:
     env_file:
       - .env.production
     depends_on:
-      db:
-        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
     environment:
       NODE_ENV: production
       NEXTAUTH_URL: ${NEXTAUTH_URL:?NEXTAUTH_URL is required}
