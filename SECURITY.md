@@ -57,3 +57,11 @@ Please allow the maintainer time to investigate and prepare a fix before public 
 ## Automated security checks
 
 The repository uses automated checks including dependency auditing, secret scanning with gitleaks, Dependabot updates, and CodeQL. These checks complement — but do not replace — code review, tests, and responsible disclosure.
+
+### Known tooling-only advisories
+
+The full `npm audit` report is always emitted in CI. At the time this policy was added, current upstream releases of the Prisma CLI and Next.js ESLint tooling still carried high-severity advisories through development/CLI-only dependency chains.
+
+The blocking audit check permits only the explicitly listed tooling packages in `scripts/check-audit.mjs`; any new high/critical package fails CI. The regular Docker CI separately verifies that Prisma CLI, MySQL tooling, deepmerge tooling, and braces are absent from the traffic-serving runtime image.
+
+Dependabot remains enabled so the allowlist can be reduced as upstream fixes become available.
