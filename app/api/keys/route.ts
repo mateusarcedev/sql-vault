@@ -1,19 +1,17 @@
 import { auth } from "@/auth"
 import db from "@/lib/db"
+import { createApiToken } from "@/lib/api-key-token"
 import { NextResponse } from "next/server"
-import { randomBytes } from "node:crypto"
 
-export const GET: any = async (req: any) => {
+export const GET: any = async () => {
   try {
     const session = await auth()
     if (!session?.user?.id) {
       return NextResponse.json({ message: "Not authenticated" }, { status: 401 })
     }
 
-    const userId = session.user.id
-
     const apiKeys = await db.apiKey.findMany({
-      where: { userId },
+      where: { userId: session.user.id },
       select: {
         id: true,
         name: true,
@@ -26,51 +24,53 @@ export const GET: any = async (req: any) => {
 
     return NextResponse.json(apiKeys)
   } catch (error) {
-    console.error("[API_KEYS_GET] Full error:", error)
-    return NextResponse.json({ message: "Internal Error", details: error instanceof Error ? error.message : String(error) }, { status: 500 })
+    console.error("[API_KEYS_GET]", error)
+    return NextResponse.json({ message: "Internal Error" }, { status: 500 })
   }
 }
 
-export const POST: any = async (req: any) => {
+export const POST: any = async (req: Request) => {
   try {
     const session = await auth()
     if (!session?.user?.id) {
       return NextResponse.json({ message: "Not authenticated" }, { status: 401 })
     }
 
-    const userId = session.user.id
     const body = await req.json()
-    const { name } = body
+    const name = typeof body?.name === "string" ? body.name.trim() : ""
 
-    if (!name || typeof name !== "string" || name.trim().length === 0) {
+    if (!name) {
       return NextResponse.json({ message: "Name is required" }, { status: 400 })
     }
 
     if (name.length > 50) {
-      return NextResponse.json({ message: "Name must be at most 50 characters" }, { status: 400 })
+      return NextResponse.json(
+        { message: "Name must be at most 50 characters" },
+        { status: 400 }
+      )
     }
 
-    const token = randomBytes(32).toString('hex')
+    const { token, tokenHash } = createApiToken()
 
     const apiKey = await db.apiKey.create({
       data: {
-        name: name.trim(),
+        name,
         token,
+        tokenHash,
         regeneratedAt: new Date(),
-        userId,
+        userId: session.user.id,
       },
       select: {
         id: true,
         name: true,
-        token: true,
         regeneratedAt: true,
         createdAt: true,
-      }
+      },
     })
 
-    return NextResponse.json(apiKey)
+    return NextResponse.json({ ...apiKey, token })
   } catch (error) {
-    console.error("[API_KEYS_POST] Full error:", error)
-    return NextResponse.json({ message: "Internal Error", details: error instanceof Error ? error.message : String(error) }, { status: 500 })
+    console.error("[API_KEYS_POST]", error)
+    return NextResponse.json({ message: "Internal Error" }, { status: 500 })
   }
 }
