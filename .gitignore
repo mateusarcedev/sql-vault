@@ -9,6 +9,7 @@ next.user-config.*
 
 # Environment variables
 .env
+.env.production
 .env*.local
 
 # Database
@@ -23,3 +24,5 @@ node_modules/
 .worktrees/
 
 sqlvault-vscode
+# Local database backups
+backups/
