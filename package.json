@@ -3,9 +3,9 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
+    "dev": "npm run env:check && next dev",
     "build": "next build",
-    "start": "next start",
+    "start": "npm run env:check && next start",
     "lint": "eslint .",
     "test": "vitest run",
     "test:watch": "vitest",
@@ -13,7 +13,11 @@
     "typecheck": "tsc --noEmit",
     "prisma:generate": "prisma generate",
     "db:migrate:deploy": "prisma migrate deploy",
-    "db:seed:demo": "node scripts/seed-demo.mjs"
+    "db:seed:demo": "node scripts/seed-demo.mjs",
+    "env:check": "node --experimental-strip-types scripts/validate-env.ts",
+    "db:backfill:api-key-hashes": "node scripts/backfill-api-key-hashes.mjs",
+    "db:encrypt:ai-secrets": "node scripts/encrypt-ai-secrets.mjs",
+    "db:prepare": "npm run env:check && npm run db:migrate:deploy && npm run db:backfill:api-key-hashes && npm run db:encrypt:ai-secrets"
   },
   "dependencies": {
     "@auth/prisma-adapter": "^2.11.1",
