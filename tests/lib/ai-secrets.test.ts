@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it } from "vitest"
+import { beforeEach, describe, expect, it, vi } from "vitest"
 
 import {
   decryptAISecret,
@@ -11,9 +11,9 @@ const AI_KEY = Buffer.from("0123456789abcdef0123456789abcdef").toString("base64"
 
 describe("AI credential encryption", () => {
   beforeEach(() => {
-    process.env.DATABASE_URL = "postgresql://user:pass@localhost:5432/sqlvault"
-    process.env.AI_ENCRYPTION_KEY = AI_KEY
-    process.env.NODE_ENV = "test"
+    vi.stubEnv("DATABASE_URL", "postgresql://user:pass@localhost:5432/sqlvault")
+    vi.stubEnv("AI_ENCRYPTION_KEY", AI_KEY)
+    vi.stubEnv("NODE_ENV", "test")
     resetServerEnvCacheForTests()
   })
 
