@@ -25,14 +25,10 @@ jobs:
           node-version-file: .nvmrc
           cache: npm
 
-      - name: Refresh security-sensitive dependencies
+      - name: Regenerate dependency lockfile
         run: |
-          npm install             next@16.3.8             next-auth@5.0.0-beta.32             @auth/prisma-adapter@2.11.3             @prisma/client@7.10.0             @prisma/adapter-pg@7.10.0             prisma@7.10.0             next-intl@4.14.9
-
-          npm install -D             vitest@4.1.11             @vitest/coverage-v8@4.1.11             eslint-config-next@16.3.8
-
-          npm pkg set overrides.dompurify=3.4.16
-          npm update
+          rm -rf node_modules package-lock.json
+          npm install
           npm audit fix || true
 
       - name: Validate refreshed dependencies
@@ -42,13 +38,13 @@ jobs:
           npm test
           npm run build
 
-      - name: Show audit status
-        run: npm audit --audit-level=high || true
+      - name: Require clean high/critical audit
+        run: npm audit --audit-level=high
 
-      - name: Commit dependency refresh
+      - name: Commit refreshed lockfile
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add package.json package-lock.json
-          git commit -m "chore: refresh dependencies for security fixes" || exit 0
+          git commit -m "chore: refresh lockfile after security updates" || exit 0
           git push
