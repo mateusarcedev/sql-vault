@@ -78,6 +78,15 @@ npm test
 npm run build
 ```
 
+Se a mudança afetar fluxos de interface, autenticação, navegação ou integrações críticas, instale o Chromium do Playwright uma vez e execute:
+
+```bash
+npx playwright install chromium
+npm run test:e2e
+```
+
+Os testes E2E usam PostgreSQL e o seed demo; mantenha o banco local preparado conforme a seção anterior.
+
 Se a mudança afetar banco ou Docker, valide também:
 
 ```bash
@@ -91,7 +100,8 @@ docker compose build
 - [ ] O escopo está limitado e descrito claramente.
 - [ ] Lint passou.
 - [ ] Typecheck passou.
-- [ ] Testes passaram.
+- [ ] Testes unitários/API passaram.
+- [ ] E2E Playwright passou quando o fluxo alterado é coberto pela suíte.
 - [ ] Build passou.
 - [ ] Novas rotas ou regras foram testadas.
 - [ ] Ownership e autenticação foram revisados.

@@ -31,7 +31,7 @@
 * 💻 Extensão VS Code para buscar e salvar consultas direto no editor
 * 🔐 Credenciais de IA criptografadas com AES-256-GCM e API Keys autenticadas por hash
 * 🐘 PostgreSQL 17 com migrations one-shot antes da aplicação iniciar
-* 🛡️ CI com lint, typecheck, testes, build, Docker, CodeQL, gitleaks e auditoria de dependências
+* 🛡️ CI com lint, typecheck, testes unitários/API, Playwright E2E, build, Docker, CodeQL, gitleaks e auditoria de dependências
 * 🌐 Deploy self-hosted com Caddy, HTTPS automático, backup e restore do PostgreSQL
 
 ## Quick Start com Docker
@@ -229,7 +229,7 @@ O projeto inclui:
 - container da aplicação executado como usuário non-root;
 - Prisma CLI isolado da imagem que atende tráfego;
 - migrations executadas em serviço one-shot antes do app;
-- CI com lint, typecheck, 132 testes, build, healthcheck Docker e validação do stack de produção;
+- CI com lint, typecheck, **132 testes unitários/API + 8 cenários E2E Playwright**, build, healthcheck Docker e validação do stack de produção;
 - CodeQL, gitleaks, Dependabot e auditoria de dependências;
 - backup e restore PostgreSQL validados em CI.
 

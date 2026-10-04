@@ -78,6 +78,15 @@ npm test
 npm run build
 ```
 
+If the change affects UI flows, authentication, navigation, or other critical integrations, install Playwright Chromium once and run:
+
+```bash
+npx playwright install chromium
+npm run test:e2e
+```
+
+The E2E suite uses PostgreSQL and the demo seed; keep the local database prepared as described above.
+
 If the change affects the database or Docker, also run:
 
 ```bash
@@ -91,7 +100,8 @@ docker compose build
 - [ ] Scope is focused and clearly described.
 - [ ] Lint passes.
 - [ ] Typecheck passes.
-- [ ] Tests pass.
+- [ ] Unit/API tests pass.
+- [ ] Playwright E2E passes when the changed flow is covered by the suite.
 - [ ] Build passes.
 - [ ] New routes or business rules have tests.
 - [ ] Ownership and authentication were reviewed.

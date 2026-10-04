@@ -294,6 +294,75 @@ jobs:
       - name: Build
         run: npm run build
 
+
+  e2e:
+    name: Playwright E2E
+    runs-on: ubuntu-latest
+    needs: quality
+
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: sqlvault
+          POSTGRES_PASSWORD: sqlvault
+          POSTGRES_DB: sqlvault
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U sqlvault -d sqlvault"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup Node
+        uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Generate Prisma Client
+        run: npm run prisma:generate
+
+      - name: Apply PostgreSQL migrations
+        run: npm run db:migrate:deploy
+
+      - name: Seed deterministic demo data
+        env:
+          ALLOW_DEMO_SEED: "true"
+        run: npm run db:seed:demo
+
+      - name: Build application
+        run: npm run build
+
+      - name: Run Playwright E2E suite
+        env:
+          CI: "true"
+          AUTH_TRUST_HOST: "true"
+          PLAYWRIGHT_BASE_URL: http://localhost:3000
+        run: npm run test:e2e
+
+      - name: Upload Playwright failure artifacts
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: playwright-e2e-failure
+          path: |
+            playwright-report/
+            test-results/
+          if-no-files-found: ignore
+          retention-days: 7
+
   container-health:
     name: Container health
     runs-on: ubuntu-latest

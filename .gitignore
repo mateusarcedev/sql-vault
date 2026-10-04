@@ -30,3 +30,9 @@ backups/
 # Generated TypeScript/Tailwind artifacts
 *.tsbuildinfo
 test.css
+
+# Playwright E2E artifacts
+playwright-report/
+test-results/
+blob-report/
+.playwright/
