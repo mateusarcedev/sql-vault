@@ -211,6 +211,10 @@ Disponível no [VS Code Marketplace](https://marketplace.visualstudio.com/items?
 └── prisma/       - Definições de schema e migrations do PostgreSQL.
 ```
 
+## Deploy em produção
+
+Para VPS com PostgreSQL + Caddy + HTTPS automático, consulte [DEPLOYMENT.md](DEPLOYMENT.md).
+
 ## Contribuindo
 
 Leia o `ARCHITECTURE.md` e o `CONTRIBUTING.md`.

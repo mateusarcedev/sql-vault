@@ -376,3 +376,124 @@ jobs:
       - name: Cleanup
         if: always()
         run: docker compose down -v --remove-orphans
+
+
+  production-stack:
+    name: Production stack
+    runs-on: ubuntu-latest
+    needs: container-health
+    env:
+      SQLVAULT_DOMAIN: http://localhost
+      ACME_EMAIL: ci@example.com
+      POSTGRES_USER: sqlvault
+      POSTGRES_PASSWORD: ci-postgres-password
+      POSTGRES_DB: sqlvault
+      DATABASE_URL: postgresql://sqlvault:ci-postgres-password@db:5432/sqlvault?schema=public
+      NEXTAUTH_URL: http://localhost
+      AUTH_SECRET: ci-production-auth-secret-with-at-least-32-characters
+      AUTH_TRUST_HOST: "true"
+      AI_ENCRYPTION_KEY: MDEyMzQ1Njc4OWFiY2RlZjAxMjM0NTY3ODlhYmNkZWY=
+      OLLAMA_BASE_URL: ""
+      ALLOW_DEMO_SEED: "false"
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Prepare production environment
+        run: |
+          cat > .env.production <<'EOF'
+          SQLVAULT_DOMAIN=http://localhost
+          ACME_EMAIL=ci@example.com
+          POSTGRES_USER=sqlvault
+          POSTGRES_PASSWORD=ci-postgres-password
+          POSTGRES_DB=sqlvault
+          DATABASE_URL=postgresql://sqlvault:ci-postgres-password@db:5432/sqlvault?schema=public
+          NEXTAUTH_URL=http://localhost
+          AUTH_SECRET=ci-production-auth-secret-with-at-least-32-characters
+          AUTH_TRUST_HOST=true
+          AI_ENCRYPTION_KEY=MDEyMzQ1Njc4OWFiY2RlZjAxMjM0NTY3ODlhYmNkZWY=
+          OLLAMA_BASE_URL=
+          ALLOW_DEMO_SEED=false
+          EOF
+
+          docker compose --env-file .env.production -f docker-compose.prod.yml config
+          docker compose --env-file .env.production -f docker-compose.prod.yml config --format json > /tmp/prod-compose.json
+
+          node <<'NODE'
+          const fs = require('node:fs')
+          const config = JSON.parse(fs.readFileSync('/tmp/prod-compose.json', 'utf8'))
+
+          const appPorts = config.services.app.ports ?? []
+          const dbPorts = config.services.db.ports ?? []
+          const caddyPorts = config.services.caddy.ports ?? []
+
+          if (appPorts.length !== 0) throw new Error('Production app must not publish host ports')
+          if (dbPorts.length !== 0) throw new Error('Production database must not publish host ports')
+          if (caddyPorts.length < 2) throw new Error('Caddy must publish HTTP/HTTPS ports')
+          if (config.networks.backend.internal !== true) {
+            throw new Error('Production backend network must be internal')
+          }
+          NODE
+
+      - name: Build production image
+        run: docker compose --env-file .env.production -f docker-compose.prod.yml build app
+
+      - name: Start production stack
+        run: docker compose --env-file .env.production -f docker-compose.prod.yml up -d
+
+      - name: Wait for Caddy proxy and application health
+        run: |
+          for i in $(seq 1 60); do
+            if curl -fsS http://localhost/api/health | grep -q '"status":"ok"'; then
+              docker compose --env-file .env.production -f docker-compose.prod.yml ps
+              exit 0
+            fi
+            sleep 2
+          done
+
+          docker compose --env-file .env.production -f docker-compose.prod.yml ps
+          docker compose --env-file .env.production -f docker-compose.prod.yml logs --no-color
+          exit 1
+
+      - name: Verify only Caddy publishes host ports
+        run: |
+          app_bindings="$(docker inspect --format='{{json .HostConfig.PortBindings}}' sql-vault)"
+          db_bindings="$(docker inspect --format='{{json .HostConfig.PortBindings}}' sql-vault-db)"
+          caddy_bindings="$(docker inspect --format='{{json .HostConfig.PortBindings}}' sql-vault-caddy)"
+
+          test "$app_bindings" = "{}"
+          test "$db_bindings" = "{}"
+          echo "$caddy_bindings" | grep -q '"80/tcp"'
+          echo "$caddy_bindings" | grep -q '"443/tcp"'
+
+      - name: Validate PostgreSQL backup and restore
+        run: |
+          docker compose --env-file .env.production -f docker-compose.prod.yml exec -T db             psql -U sqlvault -d sqlvault -c             "CREATE TABLE __prod_backup_validation (id integer PRIMARY KEY, value text NOT NULL); INSERT INTO __prod_backup_validation VALUES (1, 'restored');"
+
+          backup_file="$(BACKUP_DIR=/tmp/sqlvault-backups sh deploy/backup-postgres.sh)"
+          test -s "$backup_file"
+
+          docker compose --env-file .env.production -f docker-compose.prod.yml exec -T db             psql -U sqlvault -d sqlvault -c "DROP TABLE __prod_backup_validation;"
+
+          docker compose --env-file .env.production -f docker-compose.prod.yml stop app caddy
+
+          CONFIRM_RESTORE=sqlvault sh deploy/restore-postgres.sh "$backup_file"
+
+          value="$(docker compose --env-file .env.production -f docker-compose.prod.yml exec -T db             psql -U sqlvault -d sqlvault -Atc "SELECT value FROM __prod_backup_validation WHERE id = 1;")"
+          test "$value" = "restored"
+
+          docker compose --env-file .env.production -f docker-compose.prod.yml up -d app caddy
+
+          for i in $(seq 1 45); do
+            if curl -fsS http://localhost/api/health | grep -q '"status":"ok"'; then
+              exit 0
+            fi
+            sleep 2
+          done
+
+          exit 1
+
+      - name: Cleanup production stack
+        if: always()
+        run: docker compose --env-file .env.production -f docker-compose.prod.yml down -v --remove-orphans
