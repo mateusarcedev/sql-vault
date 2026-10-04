@@ -7,7 +7,7 @@ test.describe("authentication", () => {
     await page.goto("/en/settings")
 
     await expect(page).toHaveURL(/\/en\/login$/)
-    await expect(page.getByRole("heading", { name: "Login" })).toBeVisible()
+    await expect(page.getByText("Enter your email and password to login", { exact: true })).toBeVisible()
   })
 
   test("rejects invalid credentials", async ({ page }) => {
