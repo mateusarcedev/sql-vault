@@ -445,7 +445,7 @@ jobs:
       - name: Wait for Caddy proxy and application health
         run: |
           for i in $(seq 1 60); do
-            if curl -fsS http://127.0.0.1/api/health | grep -q '"status":"ok"'; then
+            if curl -fsS http://localhost/api/health | grep -q '"status":"ok"'; then
               docker compose --env-file .env.production -f docker-compose.prod.yml ps
               exit 0
             fi
@@ -486,7 +486,7 @@ jobs:
           docker compose --env-file .env.production -f docker-compose.prod.yml up -d app caddy
 
           for i in $(seq 1 45); do
-            if curl -fsS http://127.0.0.1/api/health | grep -q '"status":"ok"'; then
+            if curl -fsS http://localhost/api/health | grep -q '"status":"ok"'; then
               exit 0
             fi
             sleep 2
