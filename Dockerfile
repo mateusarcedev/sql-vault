@@ -12,13 +12,23 @@ COPY . .
 RUN npm run prisma:generate
 RUN npm run build
 
+FROM base AS migrator
+ENV NODE_ENV=production
+WORKDIR /app
+
+COPY --from=builder /app/node_modules ./node_modules
+COPY --from=builder /app/prisma ./prisma
+COPY --from=builder /app/prisma.config.ts ./prisma.config.ts
+COPY --from=builder /app/package.json ./package.json
+
+RUN chown -R node:node /app
+USER node
+
+CMD ["npm", "run", "db:migrate:deploy"]
+
 FROM base AS prod-deps
 COPY package.json package-lock.json ./
-COPY prisma ./prisma
-COPY prisma.config.ts ./prisma.config.ts
-RUN npm ci --omit=dev
-RUN npm run prisma:generate
-RUN npm cache clean --force
+RUN npm ci --omit=dev && npm cache clean --force
 
 FROM base AS runner
 ENV NODE_ENV=production
@@ -26,6 +36,8 @@ ENV NEXT_TELEMETRY_DISABLED=1
 WORKDIR /app
 
 COPY --from=prod-deps /app/node_modules ./node_modules
+COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
+COPY --from=builder /app/node_modules/@prisma/client ./node_modules/@prisma/client
 COPY --from=builder /app/.next ./.next
 COPY --from=builder /app/public ./public
 COPY --from=builder /app/prisma ./prisma
@@ -45,4 +57,4 @@ USER node
 
 EXPOSE 3000
 
-CMD ["sh", "-c", "npm run db:prepare && npx next start"]
+CMD ["sh", "-c", "npm run db:prepare:runtime && npx next start"]
