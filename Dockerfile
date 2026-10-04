@@ -40,6 +40,9 @@ COPY --from=builder /app/lib ./lib
 COPY --from=builder /app/app ./app
 COPY --from=builder /app/scripts ./scripts
 
+RUN chown -R node:node /app
+USER node
+
 EXPOSE 3000
 
-CMD ["sh", "-c", "npm run db:migrate:deploy && npm run start"]
+CMD ["sh", "-c", "npm run db:prepare && npx next start"]

@@ -42,11 +42,13 @@ cd sql-vault
 cp .env.example .env
 ```
 
-Gere um `AUTH_SECRET` local e copie o valor para `AUTH_SECRET=""` no arquivo `.env`:
+Gere os dois segredos locais e copie os valores para `AUTH_SECRET` e `AI_ENCRYPTION_KEY` no arquivo `.env`:
 
 ```bash
-node -e "console.log(require('crypto').randomBytes(32).toString('base64'))"
+node -e "const c=require('crypto'); console.log('AUTH_SECRET='+c.randomBytes(32).toString('base64')); console.log('AI_ENCRYPTION_KEY='+c.randomBytes(32).toString('base64'))"
 ```
+
+`AI_ENCRYPTION_KEY` protege em repouso as chaves de provedores de IA com AES-256-GCM. Guarde essa chave com o mesmo cuidado do `AUTH_SECRET`; trocar ou perder o valor impede descriptografar credenciais já salvas.
 
 Suba a aplicação:
 

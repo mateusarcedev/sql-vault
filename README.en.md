@@ -42,11 +42,13 @@ cd sql-vault
 cp .env.example .env
 ```
 
-Generate a local `AUTH_SECRET` and paste the value into `AUTH_SECRET=""` in `.env`:
+Generate both local secrets and paste the values into `AUTH_SECRET` and `AI_ENCRYPTION_KEY` in `.env`:
 
 ```bash
-node -e "console.log(require('crypto').randomBytes(32).toString('base64'))"
+node -e "const c=require('crypto'); console.log('AUTH_SECRET='+c.randomBytes(32).toString('base64')); console.log('AI_ENCRYPTION_KEY='+c.randomBytes(32).toString('base64'))"
 ```
+
+`AI_ENCRYPTION_KEY` protects AI provider credentials at rest with AES-256-GCM. Treat it like `AUTH_SECRET`; changing or losing it makes previously encrypted credentials unreadable.
 
 Start the application:
 

@@ -2,6 +2,8 @@ import { auth } from '@/auth'
 import db from '@/lib/db'
 import { NextResponse } from 'next/server'
 import { AIProvider } from '@/types/ai'
+import { encryptAISecret } from '@/lib/ai/secrets'
+import { getServerEnv } from '@/lib/env'
 
 const VALID_PROVIDERS: AIProvider[] = [
   'ollama',
@@ -23,6 +25,24 @@ const normalizeOptionalUrl = (value: unknown): string | null => {
   if (typeof value !== 'string') return null
   const trimmed = value.trim()
   return trimmed ? trimmed : null
+}
+
+const resolveSecret = (
+  incoming: unknown,
+  existing: string | null | undefined
+): string | null => {
+  if (incoming === '' || incoming === undefined || incoming === null) {
+    return existing ?? null
+  }
+
+  if (typeof incoming !== 'string') {
+    return existing ?? null
+  }
+
+  const trimmed = incoming.trim()
+  if (!trimmed) return existing ?? null
+
+  return encryptAISecret(trimmed)
 }
 
 const isValidUrl = (value: string): boolean => {
@@ -51,7 +71,7 @@ export const GET = async () => {
       hasOpenaiKey: !!config?.openaiApiKey,
       hasAnthropicKey: !!config?.anthropicApiKey,
       hasGeminiKey: !!config?.geminiApiKey,
-      ollamaAvailable: !!process.env.OLLAMA_BASE_URL,
+      ollamaAvailable: !!getServerEnv().OLLAMA_BASE_URL,
       modelsUrl: config?.modelsUrl ?? null,
       connectionUrl: config?.connectionUrl ?? null,
     })
@@ -104,13 +124,10 @@ export const PUT = async (req: Request) => {
     const data = {
       provider,
       model,
-      // Empty string = keep existing; new value = overwrite; undefined = keep existing
-      openaiApiKey:
-        openaiApiKey === '' ? existing?.openaiApiKey ?? null : (openaiApiKey ?? existing?.openaiApiKey ?? null),
-      anthropicApiKey:
-        anthropicApiKey === '' ? existing?.anthropicApiKey ?? null : (anthropicApiKey ?? existing?.anthropicApiKey ?? null),
-      geminiApiKey:
-        geminiApiKey === '' ? existing?.geminiApiKey ?? null : (geminiApiKey ?? existing?.geminiApiKey ?? null),
+      // Empty/undefined keeps the existing value; new values are encrypted at rest.
+      openaiApiKey: resolveSecret(openaiApiKey, existing?.openaiApiKey),
+      anthropicApiKey: resolveSecret(anthropicApiKey, existing?.anthropicApiKey),
+      geminiApiKey: resolveSecret(geminiApiKey, existing?.geminiApiKey),
       modelsUrl: requiresCustomUrls
         ? normalizedModelsUrl
         : null,
@@ -131,7 +148,7 @@ export const PUT = async (req: Request) => {
       hasOpenaiKey: !!config.openaiApiKey,
       hasAnthropicKey: !!config.anthropicApiKey,
       hasGeminiKey: !!config.geminiApiKey,
-      ollamaAvailable: !!process.env.OLLAMA_BASE_URL,
+      ollamaAvailable: !!getServerEnv().OLLAMA_BASE_URL,
       modelsUrl: config.modelsUrl,
       connectionUrl: config.connectionUrl,
     })

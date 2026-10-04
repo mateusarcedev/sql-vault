@@ -4,6 +4,7 @@ import { analyzeSQL } from '@/lib/ai'
 import { NextResponse } from 'next/server'
 import { AIProvider } from '@/types/ai'
 import { aiAnalysisResultSchema } from '@/lib/ai/schema'
+import { decryptAISecret } from '@/lib/ai/secrets'
 
 export const POST = async (req: Request) => {
   const startedAt = Date.now()
@@ -53,9 +54,9 @@ export const POST = async (req: Request) => {
       const result = await analyzeSQL(sql, normalizedDialect, {
         provider,
         model: config.model,
-        openaiApiKey: config.openaiApiKey,
-        anthropicApiKey: config.anthropicApiKey,
-        geminiApiKey: config.geminiApiKey,
+        openaiApiKey: decryptAISecret(config.openaiApiKey),
+        anthropicApiKey: decryptAISecret(config.anthropicApiKey),
+        geminiApiKey: decryptAISecret(config.geminiApiKey),
         modelsUrl: config.modelsUrl,
         connectionUrl: config.connectionUrl,
       }, databaseContext)

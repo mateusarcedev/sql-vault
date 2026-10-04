@@ -240,14 +240,16 @@ Arquivo `.env` obrigatório na raiz do projeto. Nunca commitar este arquivo.
 | Variável | Obrigatória | Descrição |
 | :--- | :--- | :--- |
 | `DATABASE_URL` | Sim | URL PostgreSQL. Ex: `postgresql://sqlvault:sqlvault@localhost:5432/sqlvault?schema=public` |
-| `AUTH_SECRET` | Sim | Secret do NextAuth. Gerar com: `openssl rand -base64 32` |
+| `AUTH_SECRET` | Sim | Secret do NextAuth. Em produção deve ter pelo menos 32 caracteres. |
 | `NEXTAUTH_URL` | Sim (prod) | URL base da aplicação. Ex: `http://localhost:3000` |
+| `AI_ENCRYPTION_KEY` | Sim (prod) | 32 bytes em base64 usados para AES-256-GCM nas credenciais de IA. |
 
 Copiar `.env.example` como ponto de partida:
 
 ```
 DATABASE_URL="postgresql://sqlvault:sqlvault@localhost:5432/sqlvault?schema=public"
 AUTH_SECRET=""
+AI_ENCRYPTION_KEY=""
 NEXTAUTH_URL="http://localhost:3000"
 ```
 

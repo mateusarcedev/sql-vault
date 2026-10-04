@@ -29,9 +29,9 @@ model UserAIConfig {
   user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   provider        String   // "ollama" | "openai" | "anthropic" | "gemini" | "openai-compatible" | "ollama-compatible" | "open-webui"
   model           String
-  openaiApiKey    String?
-  anthropicApiKey String?
-  geminiApiKey    String?
+  openaiApiKey    String?  // AES-256-GCM ciphertext after security backfill
+  anthropicApiKey String?  // AES-256-GCM ciphertext after security backfill
+  geminiApiKey    String?  // AES-256-GCM ciphertext after security backfill
   modelsUrl       String?
   connectionUrl   String?
   createdAt       DateTime @default(now())
@@ -41,7 +41,8 @@ model UserAIConfig {
 model ApiKey {
   id         String    @id @default(cuid())
   name       String // label dado pelo usuário, ex: "VS Code"
-  token      String    @unique // gerado pelo servidor, nunca pelo cliente
+  token      String    @unique // transitional plaintext; remove only after staged rollout
+  tokenHash  String?   @unique // SHA-256 lookup used for authentication
   lastUsedAt DateTime?
   regeneratedAt DateTime?
   createdAt  DateTime  @default(now())
