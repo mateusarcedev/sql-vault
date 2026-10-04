@@ -24,6 +24,6 @@ test("creates an API key and only exposes the raw token in the one-time dialog",
   await page.getByRole("button", { name: "Understood, I've already copied the key", exact: true }).click()
 
   await expect(page.getByText(keyName, { exact: true })).toBeVisible()
-  await expect(page.getByDisplayValue(token)).toHaveCount(0)
+  await expect(page.locator(`input[value="${token}"]`)).toHaveCount(0)
   await expect(page.getByText(token, { exact: true })).toHaveCount(0)
 })
