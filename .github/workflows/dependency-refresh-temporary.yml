@@ -1,0 +1,54 @@
+name: Dependency refresh temporary
+
+on:
+  push:
+    branches:
+      - chore/portfolio-polish
+
+permissions:
+  contents: write
+
+jobs:
+  refresh:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          ref: chore/portfolio-polish
+
+      - name: Setup Node
+        uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - name: Refresh security-sensitive dependencies
+        run: |
+          npm install             next@16.3.8             next-auth@5.0.0-beta.32             @auth/prisma-adapter@2.11.3             @prisma/client@7.10.0             @prisma/adapter-pg@7.10.0             prisma@7.10.0             next-intl@4.14.9
+
+          npm install -D             vitest@4.1.11             @vitest/coverage-v8@4.1.11             eslint-config-next@16.3.8
+
+          npm pkg set overrides.dompurify=3.4.16
+          npm update
+          npm audit fix || true
+
+      - name: Validate refreshed dependencies
+        run: |
+          npm run lint
+          npm run typecheck
+          npm test
+          npm run build
+
+      - name: Show audit status
+        run: npm audit --audit-level=high || true
+
+      - name: Commit dependency refresh
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add package.json package-lock.json
+          git commit -m "chore: refresh dependencies for security fixes" || exit 0
+          git push
