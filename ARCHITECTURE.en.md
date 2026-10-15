@@ -107,7 +107,8 @@ Single source for API key resolution: `lib/auth-api-key.ts` (`getUserFromApiKey`
 * `GET /api/queries/[id]`
 * `PUT /api/queries/[id]`
 * `DELETE /api/queries/[id]` (soft delete)
-* `POST /api/queries/[id]/copy`
+* `POST /api/queries/[id]/copy` (session only; duplicates the query and increments the original's `copyCount`)
+* `POST /api/queries/[id]/usage` (increments `copyCount` without creating a copy; used by the VS Code extension)
 
 **Routines API**
 * `GET /api/routines`
@@ -208,7 +209,7 @@ NEXTAUTH_URL="http://localhost:3000"
 
 ## 13. VS Code Extension
 
-Separate repository: `github.com/{user}/sqlvault-vscode`
+Separate repository: `github.com/mateusarcedev/sql-vault-extension`
 
 Authentication: API key only (`Authorization: Bearer {token}`)
 
@@ -216,18 +217,11 @@ Consumed routes:
 * `GET /api/queries?search={term}`
 * `POST /api/queries`
 * `GET /api/tags`
-* `POST /api/queries/[id]/copy`
+* `POST /api/queries/[id]/usage`
 
 Commands:
-* `SQL Vault: Search Query` (`Cmd+Shift+S`)
+* `SQL Vault: Search Query` (`Cmd+Alt+Q` / `Ctrl+Alt+Q`)
 * `SQL Vault: Save Selected SQL`
 * `SQL Vault: Configure API Key`
 
-User settings:
-
-```json
-{
-  "sqlvault.apiUrl": "http://localhost:3000",
-  "sqlvault.apiKey": ""
-}
-```
+User settings: `sqlvault.apiUrl` in `settings.json` (`machine` scope, cannot be overridden by a workspace). The API key is stored in VS Code SecretStorage via `SQL Vault: Configure API Key`, never in `settings.json`.

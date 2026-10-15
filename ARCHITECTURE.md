@@ -121,7 +121,8 @@ A resolução de token passa exclusivamente por um único ponto de verdade: a fu
 * `GET    /api/queries/[id]`        - Busca uma query específica e seus detalhes completos.
 * `PUT    /api/queries/[id]`        - Modifica uma query existente.
 * `DELETE /api/queries/[id]`        - Soft-deleta uma query específica.
-* `POST   /api/queries/[id]/copy`   - Incrementa a métrica `copyCount` de uma query específica.
+* `POST   /api/queries/[id]/copy`  - Duplica a query como "(Cópia)" e incrementa o `copyCount` da original (apenas Sessão NextAuth).
+* `POST   /api/queries/[id]/usage` - Registra o uso da query incrementando `copyCount`, sem criar cópia (usado pela extensão VS Code).
 
 **API de Routines**
 
@@ -255,7 +256,7 @@ NEXTAUTH_URL="http://localhost:3000"
 
 ## 13. VS Code Extension
 
-Repositório separado: `github.com/{usuario}/sqlvault-vscode`
+Repositório separado: `github.com/mateusarcedev/sql-vault-extension`
 
 Extensão standalone para integrar o SQL Vault diretamente no editor. Não faz parte do monorepo — tem seu próprio `package.json`, `tsconfig.json` e ciclo de release independente.
 
@@ -265,22 +266,15 @@ Extensão standalone para integrar o SQL Vault diretamente no editor. Não faz p
 
 * `GET /api/queries?search={term}` — busca e listagem
 * `POST /api/queries` — salvar SQL selecionado
-* `GET /api/tags` — listagem para autocomplete
-* `POST /api/queries/[id]/copy` — incrementar copyCount ao inserir no editor
+* `GET /api/tags` — teste de conexão
+* `POST /api/queries/[id]/usage` — incrementar copyCount ao inserir no editor
 
 **Dependências de runtime:** nenhuma — usa apenas `node:http` e `node:https` nativos.
 
 **Comandos registrados:**
 
-* `SQL Vault: Search Query` (`Cmd+Shift+S`) — QuickPick com busca reativa
+* `SQL Vault: Search Query` (`Cmd+Alt+Q` / `Ctrl+Alt+Q`) — QuickPick com busca reativa
 * `SQL Vault: Save Selected SQL` — menu de contexto quando há seleção
 * `SQL Vault: Configure API Key` — abre `/settings` no browser e solicita o token
 
-**Configuração do usuário (`settings.json`):**
-
-```json
-{
-  "sqlvault.apiUrl": "http://localhost:3000",
-  "sqlvault.apiKey": ""
-}
-```
+**Configuração do usuário:** `sqlvault.apiUrl` em `settings.json` (escopo `machine`, não pode ser sobrescrito por workspace). A API Key fica no SecretStorage do VS Code, definida pelo comando `SQL Vault: Configure API Key`, nunca em `settings.json`.

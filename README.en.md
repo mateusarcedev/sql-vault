@@ -199,7 +199,7 @@ ext install mateusarcedev.sqlvault
 3. Paste the token when prompted
 
 **Usage:**
-- `Cmd+Shift+S` — search and insert query at cursor
+- `Cmd+Alt+Q` (macOS) / `Ctrl+Alt+Q` (Windows/Linux) — search and insert query at cursor
 - Right-click selected SQL → **SQL Vault: Save Selected SQL**
 
 Available on [VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=mateusarcedev.sqlvault)
