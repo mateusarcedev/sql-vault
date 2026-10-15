@@ -199,7 +199,7 @@ ext install mateusarcedev.sqlvault
 3. Cole o token quando solicitado
 
 **Como usar:**
-- `Cmd+Shift+S` — busca e insere uma consulta na posição do cursor
+- `Cmd+Alt+Q` (macOS) / `Ctrl+Alt+Q` (Windows/Linux) — busca e insere uma consulta na posição do cursor
 - Clique com o botão direito no SQL selecionado → **SQL Vault: Save Selected SQL**
 
 Disponível no [VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=mateusarcedev.sqlvault)
