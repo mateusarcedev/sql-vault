@@ -18,7 +18,10 @@ export const metadata: Metadata = {
   title: 'SQL Vault - SQL Query Manager',
   description: 'Organize, store and manage your SQL queries in one place',
   icons: {
-    icon: '/favicon.ico',
+    icon: [
+      { url: '/favicon.svg', type: 'image/svg+xml' },
+      { url: '/favicon.ico', sizes: '16x16 32x32 48x48' },
+    ],
     apple: '/apple-touch-icon.png',
   },
 }
