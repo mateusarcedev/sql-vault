@@ -1,9 +1,9 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import Image from 'next/image'
 import { useLocale, useTranslations } from 'next-intl'
-import { Moon, Sun } from 'lucide-react'
+import { Moon, Sun, X } from 'lucide-react'
 
 import { Link } from '@/i18n/navigation'
 import styles from './landing.module.css'
@@ -16,6 +16,13 @@ const AUTHOR_URL = 'https://www.mateusarce.dev/'
 const THEME_STORAGE_KEY = 'sql-vault-landing-theme'
 
 type Theme = 'dark' | 'light'
+
+type LightboxImage = {
+  src: string
+  width: number
+  height: number
+  alt: string
+}
 
 const FEATURE_KEYS = ['queries', 'routines', 'versions', 'portability', 'palette', 'ai'] as const
 const STAT_KEYS = ['postgres', 'crypto', 'portability', 'locales'] as const
@@ -83,6 +90,40 @@ export function LandingPage() {
   const t = useTranslations('landing')
   const locale = useLocale()
   const { theme, toggleTheme } = useLandingTheme()
+  const [lightbox, setLightbox] = useState<LightboxImage | null>(null)
+  const lastTriggerRef = useRef<HTMLElement | null>(null)
+  const lightboxCloseRef = useRef<HTMLButtonElement | null>(null)
+
+  const openLightbox = (image: LightboxImage) => {
+    lastTriggerRef.current = document.activeElement as HTMLElement | null
+    setLightbox(image)
+  }
+
+  const closeLightbox = () => {
+    setLightbox(null)
+    lastTriggerRef.current?.focus()
+  }
+
+  useEffect(() => {
+    if (!lightbox) return
+
+    const previousOverflow = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    lightboxCloseRef.current?.focus()
+
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setLightbox(null)
+        lastTriggerRef.current?.focus()
+      }
+    }
+    window.addEventListener('keydown', onKeyDown)
+
+    return () => {
+      document.body.style.overflow = previousOverflow
+      window.removeEventListener('keydown', onKeyDown)
+    }
+  }, [lightbox])
 
   return (
     <div className={styles.root} data-theme={theme}>
@@ -176,15 +217,29 @@ export function LandingPage() {
                     {t('hero.consoleLive')}
                   </span>
                 </div>
-                <Image
-                  src="/screenshots/dashboard.jpg"
-                  alt={t('hero.screenshotAlt')}
-                  width={1918}
-                  height={928}
-                  priority
-                  sizes="(min-width: 960px) 58vw, 100vw"
-                  className={styles.shot}
-                />
+                <button
+                  type="button"
+                  className={styles.zoom}
+                  aria-label={t('lightbox.open')}
+                  onClick={() =>
+                    openLightbox({
+                      src: '/screenshots/dashboard.jpg',
+                      width: 1918,
+                      height: 928,
+                      alt: t('hero.screenshotAlt'),
+                    })
+                  }
+                >
+                  <Image
+                    src="/screenshots/dashboard.jpg"
+                    alt={t('hero.screenshotAlt')}
+                    width={1918}
+                    height={928}
+                    priority
+                    sizes="(min-width: 960px) 58vw, 100vw"
+                    className={styles.shot}
+                  />
+                </button>
               </div>
             </div>
           </div>
@@ -225,14 +280,28 @@ export function LandingPage() {
               {SHOWCASE.map(({ key, src }) => (
                 <figure key={key} className={styles.shotFigure}>
                   <div className={styles.shotFrame}>
-                    <Image
-                      src={src}
-                      alt=""
-                      width={1918}
-                      height={928}
-                      sizes="(min-width: 960px) 30vw, 100vw"
-                      className={styles.shot}
-                    />
+                    <button
+                      type="button"
+                      className={styles.zoom}
+                      aria-label={`${t('lightbox.open')}: ${t(`showcase.${key}`)}`}
+                      onClick={() =>
+                        openLightbox({
+                          src,
+                          width: 1918,
+                          height: 928,
+                          alt: t(`showcase.${key}`),
+                        })
+                      }
+                    >
+                      <Image
+                        src={src}
+                        alt=""
+                        width={1918}
+                        height={928}
+                        sizes="(min-width: 960px) 30vw, 100vw"
+                        className={styles.shot}
+                      />
+                    </button>
                   </div>
                   <figcaption className={styles.shotCaption}>{t(`showcase.${key}`)}</figcaption>
                 </figure>
@@ -263,14 +332,28 @@ export function LandingPage() {
               </div>
               <figure className={styles.shotFigure}>
                 <div className={styles.shotFrame}>
-                  <Image
-                    src="/screenshots/extensao-vscode-salvar-query.jpg"
-                    alt=""
-                    width={2920}
-                    height={1664}
-                    sizes="(min-width: 960px) 55vw, 100vw"
-                    className={styles.shot}
-                  />
+                  <button
+                    type="button"
+                    className={styles.zoom}
+                    aria-label={`${t('lightbox.open')}: ${t('vscode.caption')}`}
+                    onClick={() =>
+                      openLightbox({
+                        src: '/screenshots/extensao-vscode-salvar-query.jpg',
+                        width: 2920,
+                        height: 1664,
+                        alt: t('vscode.caption'),
+                      })
+                    }
+                  >
+                    <Image
+                      src="/screenshots/extensao-vscode-salvar-query.jpg"
+                      alt=""
+                      width={2920}
+                      height={1664}
+                      sizes="(min-width: 960px) 55vw, 100vw"
+                      className={styles.shot}
+                    />
+                  </button>
                 </div>
                 <figcaption className={styles.shotCaption}>{t('vscode.caption')}</figcaption>
               </figure>
@@ -364,6 +447,37 @@ export function LandingPage() {
           </nav>
         </div>
       </footer>
+
+      {lightbox && (
+        <div
+          className={styles.lightbox}
+          role="dialog"
+          aria-modal="true"
+          aria-label={lightbox.alt}
+          onClick={(event) => {
+            if (event.target === event.currentTarget) closeLightbox()
+          }}
+        >
+          <button
+            ref={lightboxCloseRef}
+            type="button"
+            className={styles.lightboxClose}
+            onClick={closeLightbox}
+            aria-label={t('lightbox.close')}
+            title={t('lightbox.close')}
+          >
+            <X size={18} aria-hidden="true" />
+          </button>
+          <Image
+            src={lightbox.src}
+            alt={lightbox.alt}
+            width={lightbox.width}
+            height={lightbox.height}
+            sizes="95vw"
+            className={styles.lightboxImage}
+          />
+        </div>
+      )}
     </div>
   )
 }

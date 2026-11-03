@@ -16,6 +16,17 @@ test.describe("landing page", () => {
     await expect(page.getByRole("heading", { level: 1 })).toHaveText("Seu cofre para consultas SQL.")
   })
 
+  test("opens a larger view of a screenshot and closes it with Escape", async ({ page }) => {
+    await page.goto("/en")
+
+    await page.getByRole("button", { name: /Enlarge image/ }).first().click()
+    const dialog = page.getByRole("dialog")
+    await expect(dialog).toBeVisible()
+
+    await page.keyboard.press("Escape")
+    await expect(dialog).toHaveCount(0)
+  })
+
   test("redirects guests from the root to the default locale landing", async ({ page }) => {
     await page.goto("/")
 

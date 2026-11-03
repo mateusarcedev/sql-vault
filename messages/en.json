@@ -605,6 +605,10 @@
       "primary": "Install with Docker",
       "secondary": "View on GitHub"
     },
+    "lightbox": {
+      "open": "Enlarge image",
+      "close": "Close"
+    },
     "footer": {
       "license": "MIT License",
       "credit": "Built by mateusarce.dev",

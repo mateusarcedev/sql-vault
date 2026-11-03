@@ -605,6 +605,10 @@
       "primary": "Instalar com Docker",
       "secondary": "Ver no GitHub"
     },
+    "lightbox": {
+      "open": "Ampliar imagem",
+      "close": "Fechar"
+    },
     "footer": {
       "license": "Licença MIT",
       "credit": "Feito por mateusarce.dev",
