@@ -52,7 +52,7 @@ export function AppSidebar() {
   const activeRoutinesCount = listRoutines().length
 
   const mainNavItems = [
-    { titleKey: 'dashboard', url: '/', icon: Home },
+    { titleKey: 'dashboard', url: '/dashboard', icon: Home },
     { titleKey: 'queries', url: '/consultas', icon: FileCode2 },
     { titleKey: 'routines', url: '/routines', icon: Code2 },
     { titleKey: 'favorites', url: '/consultas?favoritas=true', icon: Star },
@@ -65,7 +65,6 @@ export function AppSidebar() {
   ]
 
   const isActive = (url: string) => {
-    if (url === '/') return pathname === '/'
     if (url.includes('?')) {
       return pathname + (typeof window !== 'undefined' ? window.location.search : '') === url
     }
@@ -75,7 +74,7 @@ export function AppSidebar() {
   return (
     <Sidebar>
       <SidebarHeader className="p-4">
-        <Link href="/" className="flex items-center gap-2 mb-4">
+        <Link href="/dashboard" className="flex items-center gap-2 mb-4">
           <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary">
             <Database className="h-4 w-4 text-primary-foreground" />
           </div>

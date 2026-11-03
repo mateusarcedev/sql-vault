@@ -9,6 +9,6 @@ export async function loginDemo(page: Page) {
   await page.getByLabel("Password").fill(DEMO_PASSWORD)
   await page.getByRole("button", { name: "Login", exact: true }).click()
 
-  await expect(page).toHaveURL(/\/en\/?$/)
+  await expect(page).toHaveURL(/\/en\/dashboard$/)
   await expect(page.getByText(DEMO_EMAIL, { exact: true })).toBeVisible()
 }

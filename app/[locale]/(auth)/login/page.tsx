@@ -35,7 +35,7 @@ export default function LoginPage() {
         toast.error(t('invalidCredentials'))
       } else {
         toast.success(t('success'))
-        router.push("/")
+        router.push("/dashboard")
         router.refresh()
       }
     } catch (error) {

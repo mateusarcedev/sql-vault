@@ -21,9 +21,16 @@ export default auth((req) => {
     : pathname
 
   const isAuthRoute = ['/login', '/register'].includes(pathWithoutLocale)
+  const isLandingRoute = pathWithoutLocale === '/'
+
+  // Landing pública para visitantes; usuários logados seguem para o dashboard.
+  if (isLandingRoute) {
+    if (isLoggedIn) return Response.redirect(new URL(`/${locale}/dashboard`, nextUrl))
+    return intlMiddleware(req)
+  }
 
   if (isAuthRoute) {
-    if (isLoggedIn) return Response.redirect(new URL(`/${locale}`, nextUrl))
+    if (isLoggedIn) return Response.redirect(new URL(`/${locale}/dashboard`, nextUrl))
     return intlMiddleware(req)
   }
 
@@ -36,6 +43,6 @@ export default auth((req) => {
 
 export const config = {
   matcher: [
-    '/((?!api|_next/static|_next/image|favicon\\.ico|.*\\.png$|.*\\.ico$).*)',
+    '/((?!api|_next/static|_next/image|favicon\\.ico|.*\\.(?:png|jpe?g|gif|webp|svg|ico|woff2?)$).*)',
   ],
 }

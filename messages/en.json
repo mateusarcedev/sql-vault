@@ -506,5 +506,112 @@
     "performanceReview": "Performance Review",
     "noIssues": "No issues found.",
     "writeSQL": "Write the SQL before analyzing"
+  },
+  "landing": {
+    "meta": {
+      "title": "SQL Vault · Self-hosted vault for SQL queries",
+      "description": "Store, version and reuse PostgreSQL queries and routines. Self-hosted, with a VS Code extension, a command palette and AI per provider."
+    },
+    "nav": {
+      "features": "Features",
+      "vscode": "VS Code",
+      "selfHosted": "Self-hosted",
+      "signIn": "Sign in",
+      "signUp": "Create account",
+      "github": "GitHub",
+      "language": "Language",
+      "theme": "Toggle theme"
+    },
+    "hero": {
+      "eyebrow": "Self-hosted · open source · MIT",
+      "titleLead": "Your vault for",
+      "titleAccent": "SQL queries.",
+      "description": "Store, version and reuse PostgreSQL queries and routines in your own interface. Save straight from VS Code, search with Cmd+K and run everything on your own machine or server.",
+      "ctaPrimary": "Create account",
+      "ctaSecondary": "View on GitHub",
+      "consolePath": "~/sql-vault/consultas",
+      "consoleLive": "online",
+      "screenshotAlt": "SQL Vault dashboard with saved queries, tags and recent activity"
+    },
+    "stats": {
+      "postgres": { "value": "PostgreSQL 17", "label": "reference database" },
+      "crypto": { "value": "AES-256-GCM", "label": "AI credentials at rest" },
+      "portability": { "value": "JSON · .sql", "label": "export and import" },
+      "locales": { "value": "pt-BR · en", "label": "bilingual interface" }
+    },
+    "features": {
+      "title": "Features",
+      "queries": {
+        "title": "Queries and tags",
+        "description": "Favorites, tags and soft delete. Nothing is erased at once: items go to the trash and can be restored."
+      },
+      "routines": {
+        "title": "Routines with parameters",
+        "description": "Functions, procedures, triggers and views kept together with their parameters."
+      },
+      "versions": {
+        "title": "Version history",
+        "description": "Every SQL change creates a snapshot. Compare versions side by side in Monaco Editor."
+      },
+      "portability": {
+        "title": "Import and export",
+        "description": "Export as JSON (v1 and v2) or .sql, and import them back when you need to."
+      },
+      "palette": {
+        "title": "Command palette",
+        "description": "Cmd+K to jump between queries, tags and settings without leaving the keyboard."
+      },
+      "ai": {
+        "title": "AI per provider",
+        "description": "OpenAI, Anthropic, Gemini or Ollama, with a searchable model picker. Keys are encrypted at rest."
+      }
+    },
+    "showcase": {
+      "title": "Product",
+      "queries": "Query list",
+      "detail": "Query detail",
+      "routines": "Routines"
+    },
+    "vscode": {
+      "title": "VS Code extension",
+      "description": "Search your vault and save SQL straight from the editor, without switching windows. The extension uses a personal API key, shown only once when it is created.",
+      "pointSearch": "Search queries without leaving the editor",
+      "pointSave": "Save a query directly from the editor",
+      "pointToken": "Personal token, stored only as a hash",
+      "cta": "Open on Marketplace",
+      "caption": "Saving a query from the editor"
+    },
+    "selfHosted": {
+      "title": "Self-hosted",
+      "description": "Docker Compose starts the app and PostgreSQL 17. Migrations run before the app starts. In production, Caddy handles HTTPS.",
+      "stepClone": "Clone the repository and create .env",
+      "stepSecrets": "Set AUTH_SECRET and AI_ENCRYPTION_KEY in .env",
+      "stepUp": "Start the containers",
+      "stepOpen": "Open http://localhost:3000",
+      "note": "Keep AI_ENCRYPTION_KEY as safe as AUTH_SECRET. Without it, saved AI credentials cannot be decrypted."
+    },
+    "security": {
+      "title": "Security",
+      "isolationTitle": "Per-user isolation",
+      "isolationText": "Queries, routines and tags belong to one user, and every read filters by owner.",
+      "keysTitle": "Hashed API keys",
+      "keysText": "The token is shown only once. The database stores only its hash.",
+      "credentialsTitle": "Encrypted AI credentials",
+      "credentialsText": "Provider keys are encrypted with AES-256-GCM before they reach the database.",
+      "authTitle": "Dual authentication",
+      "authText": "Web sign-in with NextAuth v5 (JWT session) and personal API keys for external integrations."
+    },
+    "cta": {
+      "title": "Your vault starts with an account.",
+      "primary": "Create account",
+      "secondary": "Sign in"
+    },
+    "footer": {
+      "license": "MIT License",
+      "credit": "Built by mateusarce.dev",
+      "github": "GitHub",
+      "marketplace": "VS Code Marketplace",
+      "docs": "Documentation"
+    }
   }
 }

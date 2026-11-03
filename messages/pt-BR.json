@@ -506,5 +506,112 @@
     "performanceReview": "Revisão de Performance",
     "noIssues": "Nenhum problema encontrado.",
     "writeSQL": "Escreva o SQL antes de analisar"
+  },
+  "landing": {
+    "meta": {
+      "title": "SQL Vault · Cofre self-hosted para consultas SQL",
+      "description": "Guarde, versione e reutilize consultas e rotinas PostgreSQL. Self-hosted, com extensão para VS Code, paleta de comandos e IA por provedor."
+    },
+    "nav": {
+      "features": "Recursos",
+      "vscode": "VS Code",
+      "selfHosted": "Self-hosted",
+      "signIn": "Entrar",
+      "signUp": "Criar conta",
+      "github": "GitHub",
+      "language": "Idioma",
+      "theme": "Alternar tema"
+    },
+    "hero": {
+      "eyebrow": "Self-hosted · código aberto · MIT",
+      "titleLead": "Seu cofre para",
+      "titleAccent": "consultas SQL.",
+      "description": "Guarde, versione e reutilize consultas e rotinas PostgreSQL em uma interface própria. Salve direto do VS Code, pesquise com Cmd+K e rode tudo na sua máquina ou servidor.",
+      "ctaPrimary": "Criar conta",
+      "ctaSecondary": "Ver no GitHub",
+      "consolePath": "~/sql-vault/consultas",
+      "consoleLive": "online",
+      "screenshotAlt": "Dashboard do SQL Vault com consultas salvas, tags e atividade recente"
+    },
+    "stats": {
+      "postgres": { "value": "PostgreSQL 17", "label": "banco de referência" },
+      "crypto": { "value": "AES-256-GCM", "label": "credenciais de IA em repouso" },
+      "portability": { "value": "JSON · .sql", "label": "exportação e importação" },
+      "locales": { "value": "pt-BR · en", "label": "interface bilíngue" }
+    },
+    "features": {
+      "title": "Recursos",
+      "queries": {
+        "title": "Consultas e tags",
+        "description": "Favoritos, tags e soft delete. Nada é apagado de vez: os itens vão para a lixeira e podem ser restaurados."
+      },
+      "routines": {
+        "title": "Rotinas com parâmetros",
+        "description": "Funções, procedures, triggers e views guardadas junto com os seus parâmetros."
+      },
+      "versions": {
+        "title": "Histórico de versões",
+        "description": "Cada alteração do SQL gera um snapshot. Compare versões lado a lado no Monaco Editor."
+      },
+      "portability": {
+        "title": "Import e export",
+        "description": "Exporte em JSON (v1 e v2) ou em .sql e importe de volta quando precisar."
+      },
+      "palette": {
+        "title": "Paleta de comandos",
+        "description": "Cmd+K para abrir consultas, tags e configurações sem tirar a mão do teclado."
+      },
+      "ai": {
+        "title": "IA por provedor",
+        "description": "OpenAI, Anthropic, Gemini ou Ollama, com seleção de modelo por pesquisa. Chaves criptografadas em repouso."
+      }
+    },
+    "showcase": {
+      "title": "Produto",
+      "queries": "Lista de consultas",
+      "detail": "Detalhe da consulta",
+      "routines": "Rotinas"
+    },
+    "vscode": {
+      "title": "Extensão para VS Code",
+      "description": "Busque consultas do vault e salve SQL direto do editor, sem trocar de janela. A extensão usa uma API key pessoal, exibida uma única vez na criação.",
+      "pointSearch": "Busca de consultas sem sair do editor",
+      "pointSave": "Salve uma consulta direto do editor",
+      "pointToken": "Token pessoal, guardado apenas como hash",
+      "cta": "Abrir no Marketplace",
+      "caption": "Salvando uma consulta a partir do editor"
+    },
+    "selfHosted": {
+      "title": "Self-hosted",
+      "description": "O Docker Compose sobe a aplicação e o PostgreSQL 17. As migrations rodam antes de a aplicação iniciar. Em produção, o Caddy cuida do HTTPS.",
+      "stepClone": "Clone o repositório e crie o .env",
+      "stepSecrets": "Defina AUTH_SECRET e AI_ENCRYPTION_KEY no .env",
+      "stepUp": "Suba os containers",
+      "stepOpen": "Abra http://localhost:3000",
+      "note": "Guarde AI_ENCRYPTION_KEY com o mesmo cuidado do AUTH_SECRET. Sem ela, as credenciais de IA já salvas não podem ser descriptografadas."
+    },
+    "security": {
+      "title": "Segurança",
+      "isolationTitle": "Isolamento por usuário",
+      "isolationText": "Consultas, rotinas e tags pertencem a um usuário, e toda leitura filtra pelo dono.",
+      "keysTitle": "API keys com hash",
+      "keysText": "O token é mostrado uma única vez. O banco guarda apenas o hash.",
+      "credentialsTitle": "Credenciais de IA criptografadas",
+      "credentialsText": "Chaves de provedores são cifradas com AES-256-GCM antes de chegar ao banco.",
+      "authTitle": "Autenticação dupla",
+      "authText": "Login na web com NextAuth v5 (sessão JWT) e API keys pessoais para integrações externas."
+    },
+    "cta": {
+      "title": "Seu cofre começa com uma conta.",
+      "primary": "Criar conta",
+      "secondary": "Entrar"
+    },
+    "footer": {
+      "license": "Licença MIT",
+      "credit": "Feito por mateusarce.dev",
+      "github": "GitHub",
+      "marketplace": "Marketplace do VS Code",
+      "docs": "Documentação"
+    }
   }
 }
