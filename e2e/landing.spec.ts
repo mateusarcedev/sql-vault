@@ -5,7 +5,9 @@ test.describe("landing page", () => {
     await page.goto("/en")
 
     await expect(page.getByRole("heading", { level: 1 })).toHaveText("Your vault for SQL queries.")
-    await expect(page.getByRole("link", { name: "Create account" }).first()).toHaveAttribute("href", "/en/register")
+    await expect(page.getByRole("link", { name: "Install with Docker" }).first()).toHaveAttribute("href", "#self-hosted")
+    await expect(page.getByRole("link", { name: "Create account" })).toHaveCount(0)
+    await expect(page.getByRole("link", { name: "Sign in" })).toHaveCount(0)
   })
 
   test("renders the Portuguese landing", async ({ page }) => {

@@ -131,12 +131,9 @@ export function LandingPage() {
               )}
             </button>
 
-            <Link href="/login" className={`${styles.btn} ${styles.btnGhost} ${styles.hideMobile}`}>
-              {t('nav.signIn')}
-            </Link>
-            <Link href="/register" className={`${styles.btn} ${styles.btnPrimary}`}>
-              {t('nav.signUp')}
-            </Link>
+            <a href="#self-hosted" className={`${styles.btn} ${styles.btnPrimary}`}>
+              {t('nav.install')}
+            </a>
           </div>
         </div>
       </header>
@@ -152,9 +149,9 @@ export function LandingPage() {
                 </h1>
                 <p className={styles.lead}>{t('hero.description')}</p>
                 <div className={styles.actions}>
-                  <Link href="/register" className={`${styles.btn} ${styles.btnPrimary}`}>
+                  <a href="#self-hosted" className={`${styles.btn} ${styles.btnPrimary}`}>
                     {t('hero.ctaPrimary')}
-                  </Link>
+                  </a>
                   <a
                     href={REPO_URL}
                     target="_blank"
@@ -332,12 +329,17 @@ export function LandingPage() {
                 {t('cta.title')}
               </h2>
               <div className={styles.actions}>
-                <Link href="/register" className={`${styles.btn} ${styles.btnPrimary}`}>
+                <a href="#self-hosted" className={`${styles.btn} ${styles.btnPrimary}`}>
                   {t('cta.primary')}
-                </Link>
-                <Link href="/login" className={`${styles.btn} ${styles.btnGhost}`}>
+                </a>
+                <a
+                  href={REPO_URL}
+                  target="_blank"
+                  rel="noreferrer"
+                  className={`${styles.btn} ${styles.btnGhost}`}
+                >
                   {t('cta.secondary')}
-                </Link>
+                </a>
               </div>
             </div>
           </div>

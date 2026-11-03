@@ -605,10 +605,6 @@
   gap: 18px;
 }
 
-.hideMobile {
-  display: inline-flex;
-}
-
 /* Responsivo */
 
 @media (hover: none) {
@@ -679,10 +675,6 @@
   .grid2,
   .shots {
     grid-template-columns: minmax(0, 1fr);
-  }
-
-  .hideMobile {
-    display: none;
   }
 
   .topbarInner {

@@ -516,8 +516,7 @@
       "features": "Features",
       "vscode": "VS Code",
       "selfHosted": "Self-hosted",
-      "signIn": "Sign in",
-      "signUp": "Create account",
+      "install": "Install",
       "github": "GitHub",
       "language": "Language",
       "theme": "Toggle theme"
@@ -527,7 +526,7 @@
       "titleLead": "Your vault for",
       "titleAccent": "SQL queries.",
       "description": "Store, version and reuse PostgreSQL queries and routines in your own interface. Save straight from VS Code, search with Cmd+K and run everything on your own machine or server.",
-      "ctaPrimary": "Create account",
+      "ctaPrimary": "Install with Docker",
       "ctaSecondary": "View on GitHub",
       "consolePath": "~/sql-vault/consultas",
       "consoleLive": "online",
@@ -602,9 +601,9 @@
       "authText": "Web sign-in with NextAuth v5 (JWT session) and personal API keys for external integrations."
     },
     "cta": {
-      "title": "Your vault starts with an account.",
-      "primary": "Create account",
-      "secondary": "Sign in"
+      "title": "Run your own vault.",
+      "primary": "Install with Docker",
+      "secondary": "View on GitHub"
     },
     "footer": {
       "license": "MIT License",

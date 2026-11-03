@@ -516,8 +516,7 @@
       "features": "Recursos",
       "vscode": "VS Code",
       "selfHosted": "Self-hosted",
-      "signIn": "Entrar",
-      "signUp": "Criar conta",
+      "install": "Instalar",
       "github": "GitHub",
       "language": "Idioma",
       "theme": "Alternar tema"
@@ -527,7 +526,7 @@
       "titleLead": "Seu cofre para",
       "titleAccent": "consultas SQL.",
       "description": "Guarde, versione e reutilize consultas e rotinas PostgreSQL em uma interface própria. Salve direto do VS Code, pesquise com Cmd+K e rode tudo na sua máquina ou servidor.",
-      "ctaPrimary": "Criar conta",
+      "ctaPrimary": "Instalar com Docker",
       "ctaSecondary": "Ver no GitHub",
       "consolePath": "~/sql-vault/consultas",
       "consoleLive": "online",
@@ -602,9 +601,9 @@
       "authText": "Login na web com NextAuth v5 (sessão JWT) e API keys pessoais para integrações externas."
     },
     "cta": {
-      "title": "Seu cofre começa com uma conta.",
-      "primary": "Criar conta",
-      "secondary": "Entrar"
+      "title": "Rode o seu próprio cofre.",
+      "primary": "Instalar com Docker",
+      "secondary": "Ver no GitHub"
     },
     "footer": {
       "license": "Licença MIT",
